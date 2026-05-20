@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchoolStock</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f3ef;
+      margin: 0;
+      padding: 20px;
+      color: #222;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    input, button, select {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+
+    button {
+      background: #d94f2b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #b93f22;
+    }
+
+    .pedido {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+
+    .status {
+      font-weight: bold;
+      color: #2b6dd9;
+    }
+
+    .stock-ok {
+      color: green;
+      font-weight: bold;
+    }
+
+    .stock-low {
+      color: orange;
+      font-weight: bold;
+    }
+
+    .stock-zero {
+      color: red;
+      font-weight: bold;
+    }
+
+    .barra-stock {
+      height: 18px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .barra-fill {
+      height: 100%;
+      background: #2a8a56;
+    }
+
+    .ok { color: green; }
+    .error { color: red; }
+
+    .btn-secundario {
+      background: #2a8a56;
+    }
+
+    .btn-secundario:hover {
+      background: #207346;
+    }
+
+    .alerta-faltante {
+      border: 1px solid #f0c4bb;
+      background: #fff1ee;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .alerta-faltante strong {
+      color: #d94f2b;
+    }
+
+    .alerta-faltante span {
+      color: #555;
+    }
+
+    #modal-movimiento,
+    #modal-producto,
+    #modal-paqueteria {
+      display: none;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>SchoolStock</h1>
+  <p id="estado">Conectando...</p>
+
+  <div class="card">
+    <h2>Nuevo pedido</h2>
+
+    <input id="id" placeholder="No. de pedido">
+    <input id="alumno" placeholder="Alumno">
+    <input id="grado" placeholder="Grado">
+    <input id="colegio" placeholder="Colegio">
+    <input id="productos" placeholder="Productos separados por |">
+
+    <button onclick="guardarPedido()">Guardar pedido</button>
+  </div>
+
+  <div class="card">
+    <h2>Inventario</h2>
+
+    <button onclick="abrirNuevoProducto()">+ Producto</button>
+    <button class="btn-secundario" onclick="abrirMovimientoInventario()">+ Entrada inventario</button>
+  </div>
+
+  <div id="modal-producto">
+    <h2>Nuevo producto</h2>
+
+    <input id="prod-nombre" placeholder="Nombre del producto">
+    <input id="prod-colegio" placeholder="Colegio">
+    <input id="prod-stock" type="number" placeholder="Stock inicial">
+    <input id="prod-max" type="number" placeholder="Stock máximo / referencia">
+
+    <button onclick="guardarProducto()">Guardar producto</button>
+    <button onclick="cerrarNuevoProducto()">Cancelar</button>
+  </div>
+
+  <div id="modal-movimiento">
+    <h2>Entrada de inventario</h2>
+
+    <input id="mov-producto" placeholder="Producto">
+    <input id="mov-colegio" placeholder="Colegio">
+    <input id="mov-cantidad" type="number" placeholder="Cantidad">
+    <input id="mov-nota" placeholder="Nota">
+
+    <button onclick="guardarMovimientoInventario()">Guardar entrada</button>
+    <button onclick="cerrarMovimientoInventario()">Cancelar</button>
+  </div>
+
+  <div id="modal-paqueteria">
+    <h2>Registrar envío</h2>
+
+    <input id="paq-id" placeholder="Número de pedido" readonly>
+
+    <select id="paq-tipo">
+      <option value="">Selecciona tipo</option>
+      <option value="Estafeta">Estafeta</option>
+      <option value="FedEx">FedEx</option>
+      <option value="Escuela">Entrega en escuela</option>
+    </select>
+
+    <input id="paq-alumno" placeholder="Alumno" readonly>
+    <input id="paq-escuela" placeholder="Escuela" readonly>
+    <input id="paq-grado" placeholder="Grado" readonly>
+
+    <input id="paq-fecha" type="date">
+
+    <button onclick="guardarPaquete()">Guardar envío</button>
+    <button onclick="cerrarPaqueteria()">Cancelar</button>
+  </div>
+
+  <div class="card">
+    <h2>Panel de inventario</h2>
+    <div id="kpis-inventario"></div>
+    <br>
+    <div id="lista-inventario"></div>
+  </div>
+
+  <div class="card">
+    <h2>Productos que bloquean pedidos</h2>
+    <div id="alertas-faltantes"></div>
+  </div>
+
+  <div class="card">
+    <h2>Pedidos registrados</h2>
+    <button onclick="cargarPedidos()">Actualizar</button>
+    <div id="lista-pedidos"></div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
+let pedidosGlobal = [];
+
+    async function cargarPedidos() {
+      const estado = document.getElementById("estado");
+      const lista = document.getElementById("lista-pedidos");
+
+      try {
+        estado.textContent = "Cargando pedidos...";
+        estado.className = "";
+
+        const respuesta = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
+        const datos = await respuesta.json();
+        const filas = datos.slice(1);
+	pedidosGlobal = filas;
+
+        if (filas.length === 0) {
+          lista.innerHTML = "<p>No hay pedidos registrados.</p>";
+          estado.textContent = "Conectado a Google Sheets";
+          estado.className = "ok";
+          return;
+        }
+
+        lista.innerHTML = "";
+
+        filas.forEach(fila => {
+          const pedido = document.createElement("div");
+          pedido.className = "pedido";
+
+          const id = fila[0];
+          const alumno = fila[1];
+          const grado = fila[2];
+          const colegio = fila[3];
+          const productos = fila[4];
+          const faltantes = fila[5] || "";
+          const status = fila[6] || "pendiente";
+
+          pedido.innerHTML = `
+            <strong>#${id}</strong><br>
+            Alumno: ${alumno}<br>
+            Grado: ${grado}<br>
+            Colegio: ${colegio}<br>
+            Productos: ${productos}<br>
+            Faltantes: ${faltantes || "Ninguno"}<br>
+            Estado: <span class="status">${status}</span><br><br>
+
+            <button onclick="marcarCompleto('${id}')">✓ Completo</button>
+            <button onclick="marcarIncompleto('${id}')">✗ Incompleto</button>
+            <button onclick="abrirPaqueteriaPorId('${id}')">📦 Registrar envío</button>
+          `;
+
+          lista.appendChild(pedido);
+        });
+
+        estado.textContent = "Conectado a Google Sheets";
+        estado.className = "ok";
+
+      } catch (error) {
+        estado.textContent = "Error al conectar con Google Sheets";
+        estado.className = "error";
+        console.error(error);
+      }
+    }
+
+    async function guardarPedido() {
+      const id = document.getElementById("id").value.trim();
+      const alumno = document.getElementById("alumno").value.trim();
+      const grado = document.getElementById("grado").value.trim();
+      const colegio = document.getElementById("colegio").value.trim();
+      const productos = document.getElementById("productos").value.trim();
+
+      if (!id || !alumno || !grado || !colegio || !productos) {
+        alert("Completa todos los campos.");
+        return;
+      }
+
+      const fila = [id, alumno, grado, colegio, productos, "", "pendiente"];
+
+      try {
+        const respuesta = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "crear",
+            hoja: "Pedidos",
+            fila: fila
+          })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.ok) {
+          alert("Error: " + resultado.error);
+          return;
+        }
+
+        alert("Pedido guardado correctamente.");
+
+        document.getElementById("id").value = "";
+        document.getElementById("alumno").value = "";
+        document.getElementById("grado").value = "";
+        document.getElementById("colegio").value = "";
+        document.getElementById("productos").value = "";
+
+        cargarPedidos();
+        cargarAlertasFaltantes();
+
+      } catch (error) {
+        alert("No se pudo guardar el pedido.");
+        console.error(error);
+      }
+    }
+
+    async function marcarCompleto(id) {
+      try {
+        const respuesta = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "completarConInventario",
+            id: id
+          })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.ok) {
+          const faltantes = resultado.faltantes || [];
+
+          alert(
+            "Pedido incompleto. Faltantes: " +
+            faltantes.join(", ")
+          );
+
+        } else {
+          alert("Pedido completo. Inventario descontado correctamente.");
+        }
+
+        cargarPedidos();
+        cargarInventario();
+        cargarAlertasFaltantes();
+
+      } catch (error) {
+        alert("No se pudo completar el pedido.");
+        console.error(error);
+      }
+    }
+
+    async function marcarIncompleto(id) {
+      const faltantes = prompt("Escribe los productos faltantes separados por |");
+
+      if (faltantes === null) return;
+
+      try {
+        const respuesta = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "actualizarPedido",
+            id: id,
+            status: "incompleto",
+            faltantes: faltantes
+          })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.ok) {
+          alert("Error: " + resultado.error);
+          return;
+        }
+
+        alert("Pedido marcado como incompleto.");
+
+        cargarPedidos();
+        cargarInventario();
+        cargarAlertasFaltantes();
+
+      } catch (error) {
+        alert("No se pudo actualizar el pedido.");
+        console.error(error);
+      }
+    }
+
+    function abrirNuevoProducto() {
+      document.getElementById("modal-producto").style.display = "block";
+    }
+
+    function cerrarNuevoProducto() {
+      document.getElementById("modal-producto").style.display = "none";
+
+      document.getElementById("prod-nombre").value = "";
+      document.getElementById("prod-colegio").value = "";
+      document.getElementById("prod-stock").value = "";
+      document.getElementById("prod-max").value = "";
+    }
+
+    async function guardarProducto() {
+      const nombre = document.getElementById("prod-nombre").value.trim();
+      const colegio = document.getElementById("prod-colegio").value.trim();
+      const stock = Number(document.getElementById("prod-stock").value);
+      const max = Number(document.getElementById("prod-max").value) || 20;
+
+      if (!nombre || !colegio || isNaN(stock) || stock < 0) {
+        alert("Completa nombre, colegio y stock inicial.");
+        return;
+      }
+
+      try {
+        const respuesta = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "crear",
+            hoja: "Inventario",
+            fila: [nombre, colegio, stock, max]
+          })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.ok) {
+          alert("Error: " + resultado.error);
+          return;
+        }
+
+        alert("Producto creado correctamente.");
+        cerrarNuevoProducto();
+        cargarInventario();
+
+      } catch (error) {
+        alert("No se pudo crear el producto.");
+        console.error(error);
+      }
+    }
+
+    function abrirMovimientoInventario() {
+      document.getElementById("modal-movimiento").style.display = "block";
+    }
+
+    function cerrarMovimientoInventario() {
+      document.getElementById("modal-movimiento").style.display = "none";
+
+      document.getElementById("mov-producto").value = "";
+      document.getElementById("mov-colegio").value = "";
+      document.getElementById("mov-cantidad").value = "";
+      document.getElementById("mov-nota").value = "";
+    }
+
+    function abrirPaqueteriaPorId(id) {
+  const pedido = pedidosGlobal.find(fila => String(fila[0]) === String(id));
+
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
+  }
+
+  const alumno = pedido[1];
+  const grado = pedido[2];
+  const escuela = pedido[3];
+
+  const modal = document.getElementById("modal-paqueteria");
+
+  modal.style.display = "block";
+
+  document.getElementById("paq-id").value = id;
+  document.getElementById("paq-alumno").value = alumno;
+  document.getElementById("paq-escuela").value = escuela;
+  document.getElementById("paq-grado").value = grado;
+
+  document.getElementById("paq-fecha").value =
+    new Date().toISOString().split("T")[0];
+
+  modal.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+    function cerrarPaqueteria() {
+      document.getElementById("modal-paqueteria").style.display = "none";
+
+      document.getElementById("paq-id").value = "";
+      document.getElementById("paq-alumno").value = "";
+      document.getElementById("paq-escuela").value = "";
+      document.getElementById("paq-grado").value = "";
+      document.getElementById("paq-fecha").value = "";
+      document.getElementById("paq-tipo").value = "";
+    }
+
+    async function guardarPaquete() {
+  const numero = document.getElementById("paq-id").value;
+  const tipo = document.getElementById("paq-tipo").value;
+  const alumno = document.getElementById("paq-alumno").value;
+  const escuela = document.getElementById("paq-escuela").value;
+  const grado = document.getElementById("paq-grado").value;
+  const fecha = document.getElementById("paq-fecha").value;
+
+  if (!tipo) {
+    alert("Selecciona el tipo de envío");
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "registrarEnvio",
+        numero: numero,
+        tipo: tipo,
+        alumno: alumno,
+        escuela: escuela,
+        grado: grado,
+        fecha: fecha
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Envío registrado correctamente");
+    cerrarPaqueteria();
+    cargarPedidos();
+
+  } catch(error) {
+    console.error(error);
+    alert("No se pudo registrar el envío");
+  }
+}
+
+    async function cargarInventario() {
+      try {
+        const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+        const datos = await respuesta.json();
+        const filas = datos.slice(1);
+
+        renderInventario(filas);
+
+      } catch(error) {
+        console.error(error);
+      }
+    }
+
+    function renderInventario(filas) {
+      const lista = document.getElementById("lista-inventario");
+      const kpis = document.getElementById("kpis-inventario");
+
+      lista.innerHTML = "";
+
+      let ok = 0;
+      let low = 0;
+      let zero = 0;
+
+      filas.forEach(fila => {
+        const nombre = fila[0];
+        const colegio = fila[1];
+        const stock = Number(fila[2]);
+        const max = Number(fila[3]) || 20;
+
+        let clase = "stock-ok";
+        let estado = "OK";
+        let color = "#2a8a56";
+
+        if(stock <= 0) {
+          clase = "stock-zero";
+          estado = "SIN STOCK";
+          color = "#d94f2b";
+          zero++;
+        }
+        else if(stock <= 5) {
+          clase = "stock-low";
+          estado = "BAJO";
+          color = "#d48b00";
+          low++;
+        }
+        else {
+          ok++;
+        }
+
+        const porcentaje = Math.min((stock / max) * 100, 100);
+
+        lista.innerHTML += `
+          <div style="
+            border:1px solid #ddd;
+            border-radius:10px;
+            padding:12px;
+            margin-bottom:12px;
+            background:white;
+          ">
+            <strong>${nombre}</strong><br>
+            <span style="color:#666">${colegio}</span>
+
+            <div class="${clase}">
+              ${estado} — ${stock}/${max}
+            </div>
+
+            <div class="barra-stock">
+              <div class="barra-fill"
+                style="
+                  width:${porcentaje}%;
+                  background:${color};
+                ">
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      kpis.innerHTML = `
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div class="card" style="flex:1; min-width:120px;">
+            <h3 style="color:green;">${ok}</h3>
+            <p>Stock OK</p>
+          </div>
+
+          <div class="card" style="flex:1; min-width:120px;">
+            <h3 style="color:orange;">${low}</h3>
+            <p>Stock bajo</p>
+          </div>
+
+          <div class="card" style="flex:1; min-width:120px;">
+            <h3 style="color:red;">${zero}</h3>
+            <p>Sin stock</p>
+          </div>
+        </div>
+      `;
+    }
+
+    async function cargarAlertasFaltantes() {
+      try {
+        const [resPedidos, resInventario] = await Promise.all([
+          fetch(`${SCRIPT_URL}?hoja=Pedidos`),
+          fetch(`${SCRIPT_URL}?hoja=Inventario`)
+        ]);
+
+        const pedidosData = await resPedidos.json();
+        const inventarioData = await resInventario.json();
+
+        const pedidos = pedidosData.slice(1);
+        const inventario = inventarioData.slice(1);
+
+        renderAlertasFaltantes(pedidos, inventario);
+
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function renderAlertasFaltantes(pedidos, inventario) {
+      const contenedor = document.getElementById("alertas-faltantes");
+      const mapa = {};
+
+      pedidos.forEach(pedido => {
+        const colegio = pedido[3];
+
+        const faltantes = String(pedido[5] || "")
+          .split("|")
+          .map(x => x.trim())
+          .filter(Boolean);
+
+        faltantes.forEach(producto => {
+          const clave = `${normalizarTexto(producto)}__${normalizarTexto(colegio)}`;
+
+          if (!mapa[clave]) {
+            mapa[clave] = {
+              producto: producto,
+              colegio: colegio,
+              pedidos: 0,
+              stock: "No encontrado"
+            };
+          }
+
+          mapa[clave].pedidos++;
+        });
+      });
+
+      Object.values(mapa).forEach(item => {
+        const encontrado = inventario.find(inv =>
+          normalizarTexto(inv[0]) === normalizarTexto(item.producto) &&
+          normalizarTexto(inv[1]) === normalizarTexto(item.colegio)
+        );
+
+        if (encontrado) {
+          item.stock = Number(encontrado[2]);
+        }
+      });
+
+      const alertas = Object.values(mapa)
+        .sort((a, b) => b.pedidos - a.pedidos);
+
+      if (alertas.length === 0) {
+        contenedor.innerHTML = "<p>No hay productos bloqueando pedidos.</p>";
+        return;
+      }
+
+      contenedor.innerHTML = alertas.map(item => `
+        <div class="alerta-faltante">
+          <strong>${item.producto}</strong><br>
+          <span>${item.colegio}</span><br>
+          Falta en <strong>${item.pedidos}</strong> pedido(s)<br>
+          Stock actual: <strong>${item.stock}</strong>
+        </div>
+      `).join("");
+    }
+
+    function normalizarTexto(texto) {
+      return String(texto)
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+    }
+
+    async function guardarMovimientoInventario() {
+      const producto = document.getElementById("mov-producto").value.trim();
+      const colegio = document.getElementById("mov-colegio").value.trim();
+      const cantidad = Number(document.getElementById("mov-cantidad").value);
+      const nota = document.getElementById("mov-nota").value.trim();
+
+      if (!producto || !colegio || cantidad <= 0) {
+        alert("Completa producto, colegio y cantidad.");
+        return;
+      }
+
+      try {
+        const respuesta = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "movimientoInventario",
+            tipo: "entrada",
+            producto: producto,
+            colegio: colegio,
+            cantidad: cantidad,
+            nota: nota
+          })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.ok) {
+          alert("Error: " + resultado.error);
+          return;
+        }
+
+        alert("Entrada registrada. Nuevo stock: " + resultado.nuevoStock);
+
+        cerrarMovimientoInventario();
+        cargarInventario();
+        cargarAlertasFaltantes();
+
+      } catch (error) {
+        alert("No se pudo guardar el movimiento.");
+        console.error(error);
+      }
+    }
+
+    cargarPedidos();
+    cargarInventario();
+    cargarAlertasFaltantes();
+  </script>
+
+</body>
+</html>
