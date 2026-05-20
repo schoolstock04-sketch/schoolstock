@@ -107,6 +107,25 @@
       color: #555;
     }
 
+
+    .caja-item {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .coincide {
+      color: green;
+      font-weight: bold;
+    }
+
+    .no-coincide {
+      color: red;
+      font-weight: bold;
+    }
+
     #modal-movimiento,
     #modal-producto,
     #modal-paqueteria {
@@ -127,7 +146,14 @@
   <p id="estado">Conectando...</p>
 
   <div class="card">
+	
     <h2>Nuevo pedido</h2>
+
+	<input
+ 	 id="qr-pedido"
+ 	 placeholder="Escanea QR del pedido aquí"
+  	onkeydown="leerQRPedido(event)"
+	>
 
     <input id="id" placeholder="No. de pedido">
     <input id="alumno" placeholder="Alumno">
@@ -189,6 +215,24 @@
 
     <button onclick="guardarPaquete()">Guardar envío</button>
     <button onclick="cerrarPaqueteria()">Cancelar</button>
+  </div>
+
+  <div class="card">
+    <h2>Relación de cajas</h2>
+
+    <input id="caja-numero" placeholder="Número de caja. Ej. Caja 1">
+    <input id="caja-colegio" placeholder="Colegio de la caja">
+
+    <input
+      id="caja-pedido"
+      placeholder="Escanea o escribe número de pedido"
+      onkeydown="leerPedidoCaja(event)"
+    >
+
+    <button onclick="agregarPedidoACaja()">Agregar pedido a caja</button>
+    <button class="btn-secundario" onclick="cargarCajas()">Actualizar relación</button>
+
+    <div id="lista-cajas"></div>
   </div>
 
   <div class="card">
@@ -322,7 +366,29 @@ let pedidosGlobal = [];
       }
     }
 
-    async function marcarCompleto(id) {
+function leerQRPedido(event) {
+  if (event.key !== "Enter") return;
+
+  const inputQR = document.getElementById("qr-pedido");
+  const texto = inputQR.value.trim();
+
+  if (!texto) return;
+
+  const partes = texto.split("]");
+
+  if (partes.length < 4) {
+    alert("QR inválido. Formato esperado: pedido]alumno]grado]colegio");
+    return;
+  }
+
+  document.getElementById("id").value = partes[0].trim();
+  document.getElementById("alumno").value = partes[1].trim();
+  document.getElementById("grado").value = partes[2].trim();
+  document.getElementById("colegio").value = partes[3].trim();
+
+  inputQR.value = "";
+  document.getElementById("productos").focus();
+}    async function marcarCompleto(id) {
       try {
         const respuesta = await fetch(SCRIPT_URL, {
           method: "POST",
@@ -538,6 +604,269 @@ let pedidosGlobal = [];
     console.error(error);
     alert("No se pudo registrar el envío");
   }
+}
+
+    function leerPedidoCaja(event) {
+      if (event.key !== "Enter") return;
+      agregarPedidoACaja();
+    }
+
+    async function agregarPedidoACaja() {
+      const caja = document.getElementById("caja-numero").value.trim();
+      const colegioCaja = document.getElementById("caja-colegio").value.trim();
+      const pedido = document.getElementById("caja-pedido").value.trim();
+
+      if (!caja || !colegioCaja || !pedido) {
+        alert("Completa número de caja, colegio de caja y pedido.");
+        return;
+      }
+
+      try {
+        const respuesta = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "registrarCaja",
+            caja: caja,
+            colegioCaja: colegioCaja,
+            pedido: pedido
+          })
+        });
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.ok) {
+          alert("Error: " + resultado.error);
+          return;
+        }
+
+        if (resultado.mismoColegio) {
+          alert("Pedido agregado a caja correctamente.");
+        } else {
+          alert(
+            "Pedido agregado, pero OJO: pertenece a otro colegio. Colegio del pedido: " +
+            resultado.colegioPedido
+          );
+        }
+
+        document.getElementById("caja-pedido").value = "";
+        document.getElementById("caja-pedido").focus();
+
+        cargarCajas();
+
+      } catch(error) {
+        console.error(error);
+        alert("No se pudo agregar el pedido a la caja.");
+      }
+    }
+
+    async function cargarCajas() {
+      try {
+        const respuesta = await fetch(`${SCRIPT_URL}?hoja=Cajas`);
+        const datos = await respuesta.json();
+        const filas = datos.slice(1);
+
+        renderCajas(filas);
+
+      } catch(error) {
+        console.error(error);
+      }
+    }
+
+    function renderCajas(filas) {
+  const contenedor = document.getElementById("lista-cajas");
+
+  if (!filas || filas.length === 0) {
+    contenedor.innerHTML = "<p>No hay pedidos relacionados a cajas.</p>";
+    return;
+  }
+
+  const cajas = {};
+
+  filas.forEach(fila => {
+    const caja = fila[0];
+    const pedido = fila[1];
+    const colegioCaja = fila[2];
+    const colegioPedido = fila[3];
+    const alumno = fila[4];
+    const grado = fila[5];
+    const fecha = fila[6];
+
+    if (!cajas[caja]) {
+      cajas[caja] = {
+        colegioCaja: colegioCaja,
+        pedidos: []
+      };
+    }
+
+    cajas[caja].pedidos.push({
+      pedido,
+      colegioCaja,
+      colegioPedido,
+      alumno,
+      grado,
+      fecha
+    });
+  });
+
+  window.cajasGlobal = cajas;
+
+  contenedor.innerHTML = Object.entries(cajas).map(([caja, data]) => {
+    const total = data.pedidos.length;
+
+    const errores = data.pedidos.filter(p =>
+      normalizarTexto(p.colegioCaja) !== normalizarTexto(p.colegioPedido)
+    ).length;
+
+    return `
+      <div style="
+        border:1px solid #ddd;
+        border-radius:12px;
+        padding:14px;
+        margin-bottom:14px;
+        background:#fff;
+      ">
+        <h3>${caja} — ${data.colegioCaja}</h3>
+
+        <p>
+          Pedidos en caja: <strong>${total}</strong>
+          ${errores > 0 ? `<br><strong style="color:red;">⚠ ${errores} pedido(s) de otro colegio</strong>` : ""}
+        </p>
+
+        <button class="btn-secundario" onclick="imprimirCaja('${caja}')">
+          🖨 Imprimir relación
+        </button>
+
+        ${data.pedidos.map(p => {
+          const errorColegio =
+            normalizarTexto(p.colegioCaja) !== normalizarTexto(p.colegioPedido);
+
+          return `
+            <div style="
+              border-top:1px solid #eee;
+              padding:8px 0;
+              ${errorColegio ? "background:#fff1ee;" : ""}
+            ">
+              <strong>#${p.pedido}</strong><br>
+              Alumno: ${p.alumno}<br>
+              Grado: ${p.grado}<br>
+              Colegio pedido:
+              <span style="color:${errorColegio ? "red" : "green"}; font-weight:bold;">
+                ${p.colegioPedido}
+              </span>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }).join("");
+}
+
+function imprimirCaja(caja) {
+  const data = window.cajasGlobal[caja];
+
+  if (!data) {
+    alert("No se encontró la caja.");
+    return;
+  }
+
+  const filas = data.pedidos.map(p => `
+    <tr>
+      <td>${p.pedido}</td>
+      <td>${p.alumno}</td>
+      <td>${p.grado}</td>
+    </tr>
+  `).join("");
+
+  const ventana = window.open("", "_blank");
+
+  ventana.document.write(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <title>${caja} - ${data.colegioCaja}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 30px;
+          color: #000;
+        }
+
+        h1 {
+          text-align: center;
+          font-size: 32px;
+          margin-bottom: 10px;
+        }
+
+        h2 {
+          text-align: center;
+          font-size: 24px;
+          margin-top: 0;
+          margin-bottom: 30px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 18px;
+        }
+
+        th, td {
+          border: 1px solid #000;
+          padding: 10px;
+          text-align: center;
+        }
+
+        th {
+          background: #eaeaea;
+        }
+
+        .footer {
+          margin-top: 40px;
+          font-size: 14px;
+          text-align: center;
+        }
+
+        @media print {
+          button {
+            display: none;
+          }
+        }
+      </style>
+    </head>
+    <body>
+
+      <h1>${caja} - ${data.colegioCaja}</h1>
+      <h2>Relación de pedidos</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Grado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filas}
+        </tbody>
+      </table>
+
+      <div class="footer">
+        Generado por SchoolStock
+      </div>
+
+      <script>
+        window.onload = function() {
+          window.print();
+        };
+      <\/script>
+
+    </body>
+    </html>
+  `);
+
+  ventana.document.close();
 }
 
     async function cargarInventario() {
@@ -769,6 +1098,7 @@ let pedidosGlobal = [];
     cargarPedidos();
     cargarInventario();
     cargarAlertasFaltantes();
+    cargarCajas();
   </script>
 
 </body>
