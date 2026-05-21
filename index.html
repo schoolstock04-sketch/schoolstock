@@ -159,7 +159,7 @@
     <input id="alumno" placeholder="Alumno">
     <input id="grado" placeholder="Grado">
     <input id="colegio" placeholder="Colegio">
-    <input id="productos" placeholder="Productos separados por |">
+    <input id="productos" placeholder="Productos separados por /">
 
     <button onclick="guardarPedido()">Guardar pedido</button>
   </div>
@@ -235,6 +235,20 @@
     <div id="lista-cajas"></div>
   </div>
 
+<div class="card">
+  <h2>Buscar ubicación de pedido</h2>
+
+  <input
+    id="buscar-ubicacion-pedido"
+    placeholder="Escanea o escribe número de pedido"
+    onkeydown="leerBusquedaUbicacion(event)"
+  >
+
+  <button onclick="buscarUbicacionPedido()">Buscar ubicación</button>
+
+  <div id="resultado-ubicacion"></div>
+</div>
+
   <div class="card">
     <h2>Panel de inventario</h2>
     <div id="kpis-inventario"></div>
@@ -248,14 +262,23 @@
   </div>
 
   <div class="card">
-    <h2>Pedidos registrados</h2>
-    <button onclick="cargarPedidos()">Actualizar</button>
-    <div id="lista-pedidos"></div>
-  </div>
+  <h2>Pedidos registrados</h2>
+
+  <input
+    id="buscar-pedido"
+    placeholder="Buscar pedido por código"
+    oninput="filtrarPedidos()"
+  >
+
+  <button onclick="cargarPedidos()">Actualizar</button>
+
+  <div id="lista-pedidos"></div>
+</div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
 let pedidosGlobal = [];
+let pedidosFiltrados = [];
 
     async function cargarPedidos() {
       const estado = document.getElementById("estado");
@@ -269,6 +292,7 @@ let pedidosGlobal = [];
         const datos = await respuesta.json();
         const filas = datos.slice(1);
 	pedidosGlobal = filas;
+	pedidosFiltrados = filas;
 
         if (filas.length === 0) {
           lista.innerHTML = "<p>No hay pedidos registrados.</p>";
@@ -279,7 +303,7 @@ let pedidosGlobal = [];
 
         lista.innerHTML = "";
 
-        filas.forEach(fila => {
+        pedidosFiltrados.forEach(fila => {
           const pedido = document.createElement("div");
           pedido.className = "pedido";
 
@@ -317,6 +341,54 @@ let pedidosGlobal = [];
         console.error(error);
       }
     }
+	function filtrarPedidos() {
+  const texto = document.getElementById("buscar-pedido").value.trim();
+
+  if (!texto) {
+    pedidosFiltrados = pedidosGlobal;
+  } else {
+    pedidosFiltrados = pedidosGlobal.filter(fila =>
+      String(fila[0]).includes(texto)
+    );
+  }
+
+  const lista = document.getElementById("lista-pedidos");
+
+  lista.innerHTML = "";
+
+  pedidosFiltrados.forEach(fila => {
+    const pedido = document.createElement("div");
+    pedido.className = "pedido";
+
+    const id = fila[0];
+    const alumno = fila[1];
+    const grado = fila[2];
+    const colegio = fila[3];
+    const productos = fila[4];
+    const faltantes = fila[5] || "";
+    const status = fila[6] || "pendiente";
+
+    pedido.innerHTML = `
+      <strong>#${id}</strong><br>
+      Alumno: ${alumno}<br>
+      Grado: ${grado}<br>
+      Colegio: ${colegio}<br>
+      Productos: ${productos}<br>
+      Faltantes: ${faltantes || "Ninguno"}<br>
+      Estado: <span class="status">${status}</span><br><br>
+
+      <button onclick="marcarCompleto('${id}')">✓ Completo</button>
+      <button onclick="marcarIncompleto('${id}')">✗ Incompleto</button>
+      <button onclick="abrirPaqueteriaPorId('${id}')">📦 Registrar envío</button>
+    `;
+
+    lista.appendChild(pedido);
+  });
+
+  if (pedidosFiltrados.length === 0) {
+    lista.innerHTML = "<p>No se encontró ningún pedido con ese código.</p>";
+  }
+}
 
     async function guardarPedido() {
       const id = document.getElementById("id").value.trim();
@@ -521,11 +593,18 @@ function leerQRPedido(event) {
       document.getElementById("mov-nota").value = "";
     }
 
-    function abrirPaqueteriaPorId(id) {
+   function abrirPaqueteriaPorId(id) {
   const pedido = pedidosGlobal.find(fila => String(fila[0]) === String(id));
 
   if (!pedido) {
     alert("No se encontró el pedido.");
+    return;
+  }
+
+  const status = String(pedido[6] || "").trim().toLowerCase();
+
+  if (status !== "completo") {
+    alert("Este pedido no puede enviarse porque su estado actual es: " + status);
     return;
   }
 
@@ -759,6 +838,86 @@ function leerQRPedido(event) {
       </div>
     `;
   }).join("");
+}
+
+function leerBusquedaUbicacion(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+  buscarUbicacionPedido();
+}
+
+async function buscarUbicacionPedido() {
+  const pedidoBuscado = document
+    .getElementById("buscar-ubicacion-pedido")
+    .value
+    .trim();
+
+  const resultado = document.getElementById("resultado-ubicacion");
+
+  if (!pedidoBuscado) {
+    alert("Escribe o escanea un número de pedido.");
+    return;
+  }
+
+  try {
+    resultado.innerHTML = "<p>Buscando ubicación...</p>";
+
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Ubicaciones`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
+
+    const encontrado = filas.find(fila =>
+      String(fila[2]).trim() === pedidoBuscado
+    );
+
+    if (!encontrado) {
+      resultado.innerHTML = `
+        <p style="color:red; font-weight:bold;">
+          No se encontró ubicación para el pedido ${pedidoBuscado}.
+        </p>
+      `;
+      return;
+    }
+
+    const ubicacion = encontrado[0];
+    const estado = encontrado[1];
+    const pedido = encontrado[2];
+    const alumno = encontrado[3];
+    const fecha = encontrado[4];
+
+    resultado.innerHTML = `
+      <div style="
+        border:1px solid #ddd;
+        border-radius:12px;
+        padding:14px;
+        margin-top:12px;
+        background:#fff;
+      ">
+        <h3>Ubicación encontrada</h3>
+        <p><strong>Pedido:</strong> ${pedido}</p>
+        <p><strong>Alumno:</strong> ${alumno}</p>
+        <p><strong>Ubicación:</strong> 
+          <span style="font-size:20px; font-weight:bold; color:#2a8a56;">
+            ${ubicacion}
+          </span>
+        </p>
+        <p><strong>Estado:</strong> ${estado}</p>
+        <p><strong>Fecha:</strong> ${fecha || ""}</p>
+      </div>
+    `;
+
+    document.getElementById("buscar-ubicacion-pedido").value = "";
+    document.getElementById("buscar-ubicacion-pedido").focus();
+
+  } catch (error) {
+    console.error(error);
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al buscar la ubicación.
+      </p>
+    `;
+  }
 }
 
 function imprimirCaja(caja) {
