@@ -146,23 +146,44 @@
   <p id="estado">Conectando...</p>
 
   <div class="card">
-	
-    <h2>Nuevo pedido</h2>
+  <h2>Filtro global</h2>
 
-	<input
- 	 id="qr-pedido"
- 	 placeholder="Escanea QR del pedido aquí"
-  	onkeydown="leerQRPedido(event)"
-	>
+  <select
+    id="filtro-colegio-global"
+    onchange="aplicarFiltroGlobal()"
+  ></select>
 
-    <input id="id" placeholder="No. de pedido">
-    <input id="alumno" placeholder="Alumno">
-    <input id="grado" placeholder="Grado">
-    <input id="colegio" placeholder="Colegio">
-    <input id="productos" placeholder="Productos separados por /">
+  <button onclick="limpiarFiltroGlobal()">
+    Ver todos los colegios
+  </button>
+</div>
 
-    <button onclick="guardarPedido()">Guardar pedido</button>
-  </div>
+  <div class="card">
+  <h2>Nuevo pedido</h2>
+
+  <input
+    id="qr-pedido"
+    placeholder="Escanea QR del pedido aquí"
+    onkeydown="leerQRPedido(event)"
+  >
+
+  <input id="id" placeholder="No. de pedido">
+  <input id="alumno" placeholder="Alumno">
+  <input id="grado" placeholder="Grado">
+  <select id="colegio"></select>
+
+  <input
+    id="scan-isbn"
+    placeholder="Escanea ISBN del libro"
+    onkeydown="leerISBN(event)"
+  >
+
+  <div id="resultado-isbn"></div>
+
+  <input id="productos" placeholder="Productos separados por /">
+
+  <button onclick="guardarPedido()">Guardar pedido</button>
+</div>
 
   <div class="card">
     <h2>Inventario</h2>
@@ -175,7 +196,7 @@
     <h2>Nuevo producto</h2>
 
     <input id="prod-nombre" placeholder="Nombre del producto">
-    <input id="prod-colegio" placeholder="Colegio">
+    <select id="prod-colegio"></select>
     <input id="prod-stock" type="number" placeholder="Stock inicial">
     <input id="prod-max" type="number" placeholder="Stock máximo / referencia">
 
@@ -187,7 +208,7 @@
     <h2>Entrada de inventario</h2>
 
     <input id="mov-producto" placeholder="Producto">
-    <input id="mov-colegio" placeholder="Colegio">
+    <select id="mov-colegio"></select>
     <input id="mov-cantidad" type="number" placeholder="Cantidad">
     <input id="mov-nota" placeholder="Nota">
 
@@ -221,7 +242,7 @@
     <h2>Relación de cajas</h2>
 
     <input id="caja-numero" placeholder="Número de caja. Ej. Caja 1">
-    <input id="caja-colegio" placeholder="Colegio de la caja">
+    <select id="caja-colegio"></select>
 
     <input
       id="caja-pedido"
@@ -277,8 +298,9 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
-let pedidosGlobal = [];
-let pedidosFiltrados = [];
+    let pedidosGlobal = [];
+    let pedidosFiltrados = [];
+    let colegioActivo = "";
 
     async function cargarPedidos() {
       const estado = document.getElementById("estado");
@@ -341,16 +363,82 @@ let pedidosFiltrados = [];
         console.error(error);
       }
     }
-	function filtrarPedidos() {
-  const texto = document.getElementById("buscar-pedido").value.trim();
 
-  if (!texto) {
-    pedidosFiltrados = pedidosGlobal;
-  } else {
-    pedidosFiltrados = pedidosGlobal.filter(fila =>
-      String(fila[0]).includes(texto)
-    );
+async function cargarColegios() {
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?colegios=1`);
+    const colegios = await respuesta.json();
+
+    const selects = [
+    "colegio",
+    "caja-colegio",
+    "prod-colegio",
+    "mov-colegio",
+    "filtro-colegio-global"
+   ];
+
+    selects.forEach(id => {
+      const select = document.getElementById(id);
+
+      if (!select) return;
+
+      select.innerHTML = `
+        <option value="">
+          Selecciona colegio
+        </option>
+      `;
+
+      colegios.forEach(colegio => {
+        select.innerHTML += `
+          <option value="${colegio}">
+            ${colegio}
+          </option>
+        `;
+      });
+    });
+
+  } catch(error) {
+    console.error(error);
   }
+}
+
+function aplicarFiltroGlobal() {
+  colegioActivo = document
+    .getElementById("filtro-colegio-global")
+    .value;
+
+  filtrarPedidos();
+  cargarInventario();
+  cargarAlertasFaltantes();
+  cargarCajas();
+}
+
+function limpiarFiltroGlobal() {
+  colegioActivo = "";
+
+  document.getElementById("filtro-colegio-global").value = "";
+
+  filtrarPedidos();
+  cargarInventario();
+  cargarAlertasFaltantes();
+  cargarCajas();
+}
+
+	function filtrarPedidos() {
+        const texto = document.getElementById("buscar-pedido").value.trim();
+
+        pedidosFiltrados = pedidosGlobal.filter(fila => {
+        const idPedido = String(fila[0]);
+        const colegioPedido = String(fila[3] || "");
+
+        const coincideTexto = !texto || idPedido.includes(texto);
+
+      const coincideColegio =
+       !colegioActivo ||
+        normalizarTexto(colegioPedido) === normalizarTexto(colegioActivo);
+
+       return coincideTexto && coincideColegio;
+   });
 
   const lista = document.getElementById("lista-pedidos");
 
@@ -386,7 +474,7 @@ let pedidosFiltrados = [];
   });
 
   if (pedidosFiltrados.length === 0) {
-    lista.innerHTML = "<p>No se encontró ningún pedido con ese código.</p>";
+    lista.innerHTML = "<p>No se encontraron pedidos con ese filtro.</p>";
   }
 }
 
@@ -493,6 +581,79 @@ function leerQRPedido(event) {
         console.error(error);
       }
     }
+
+function leerISBN(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
+  buscarISBN();
+}
+
+async function buscarISBN() {
+  const isbn = document
+    .getElementById("scan-isbn")
+    .value
+    .trim();
+
+  const resultado = document.getElementById("resultado-isbn");
+
+  if (!isbn) return;
+
+  try {
+    resultado.innerHTML = "<p>Buscando libro...</p>";
+
+    const respuesta = await fetch(
+      `${SCRIPT_URL}?isbn=${isbn}`
+    );
+
+    const libro = await respuesta.json();
+
+    if (!libro) {
+      resultado.innerHTML = `
+        <p style="color:red;">
+          Libro no encontrado
+        </p>
+      `;
+      return;
+    }
+
+    const inputProductos = document.getElementById("productos");
+    const productosActuales = inputProductos.value.trim();
+
+    if (productosActuales) {
+      inputProductos.value = productosActuales + "/" + libro.titulo;
+    } else {
+      inputProductos.value = libro.titulo;
+    }
+
+    resultado.innerHTML = `
+      <div style="
+        background:#fff;
+        border:1px solid #ddd;
+        border-radius:10px;
+        padding:10px;
+        margin-top:10px;
+      ">
+        <strong>Libro agregado:</strong><br>
+        ${libro.titulo}<br>
+        ISBN: ${libro.isbn}
+      </div>
+    `;
+
+    document.getElementById("scan-isbn").value = "";
+    document.getElementById("scan-isbn").focus();
+
+  } catch(error) {
+    console.error(error);
+
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al buscar ISBN
+      </p>
+    `;
+  }
+}
 
     async function marcarIncompleto(id) {
       const faltantes = prompt("Escribe los productos faltantes separados por |");
@@ -744,7 +905,13 @@ function leerQRPedido(event) {
         const datos = await respuesta.json();
         const filas = datos.slice(1);
 
-        renderCajas(filas);
+	const filtradas = colegioActivo
+ 	 ? filas.filter(fila =>
+   	   normalizarTexto(fila[2]) === normalizarTexto(colegioActivo)
+   	 )
+  	: filas;
+
+        renderCajas(filtradas);
 
       } catch(error) {
         console.error(error);
@@ -1033,8 +1200,13 @@ function imprimirCaja(caja) {
         const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
         const datos = await respuesta.json();
         const filas = datos.slice(1);
+        const filtradas = colegioActivo
+         ? filas.filter(fila =>
+              normalizarTexto(fila[1]) === normalizarTexto(colegioActivo)
+           )
+         : filas;
 
-        renderInventario(filas);
+        renderInventario(filtradas);
 
       } catch(error) {
         console.error(error);
@@ -1139,7 +1311,19 @@ function imprimirCaja(caja) {
         const pedidos = pedidosData.slice(1);
         const inventario = inventarioData.slice(1);
 
-        renderAlertasFaltantes(pedidos, inventario);
+	const pedidosFiltrados = colegioActivo
+ 	 ? pedidos.filter(pedido =>
+  	    normalizarTexto(pedido[3]) === normalizarTexto(colegioActivo)
+   	 )
+  	: pedidos;
+
+	const inventarioFiltrado = colegioActivo
+  	? inventario.filter(inv =>
+      	normalizarTexto(inv[1]) === normalizarTexto(colegioActivo)
+   	 )
+	  : inventario;
+
+        renderAlertasFaltantes(pedidosFiltrados, inventarioFiltrado);
 
       } catch (error) {
         console.error(error);
@@ -1258,6 +1442,7 @@ function imprimirCaja(caja) {
     cargarInventario();
     cargarAlertasFaltantes();
     cargarCajas();
+    cargarColegios();
   </script>
 
 </body>
