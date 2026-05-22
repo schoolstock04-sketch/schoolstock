@@ -194,7 +194,14 @@
 
   <div id="modal-producto">
     <h2>Nuevo producto</h2>
+   
+    <input
+     id="scan-isbn-producto"
+     placeholder="Escanea ISBN del producto"
+     onkeydown="leerISBNProducto(event)"
+    >
 
+<div id="resultado-isbn-producto"></div>
     <input id="prod-nombre" placeholder="Nombre del producto">
     <select id="prod-colegio"></select>
     <input id="prod-stock" type="number" placeholder="Stock inicial">
@@ -206,6 +213,14 @@
 
   <div id="modal-movimiento">
     <h2>Entrada de inventario</h2>
+
+    <input
+     id="scan-isbn-movimiento"
+     placeholder="Escanea ISBN del producto"
+     onkeydown="leerISBNMovimiento(event)"
+   >
+
+<div id="resultado-isbn-movimiento"></div>
 
     <input id="mov-producto" placeholder="Producto">
     <select id="mov-colegio"></select>
@@ -643,6 +658,81 @@ async function buscarISBN() {
 
     document.getElementById("scan-isbn").value = "";
     document.getElementById("scan-isbn").focus();
+
+  } catch(error) {
+    console.error(error);
+
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al buscar ISBN
+      </p>
+    `;
+  }
+}
+
+function leerISBNProducto(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
+  buscarISBNParaCampo(
+    "scan-isbn-producto",
+    "prod-nombre",
+    "resultado-isbn-producto"
+  );
+}
+
+function leerISBNMovimiento(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
+  buscarISBNParaCampo(
+    "scan-isbn-movimiento",
+    "mov-producto",
+    "resultado-isbn-movimiento"
+  );
+}
+
+async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
+  const isbn = document.getElementById(inputISBNId).value.trim();
+  const resultado = document.getElementById(resultadoId);
+
+  if (!isbn) return;
+
+  try {
+    resultado.innerHTML = "<p>Buscando libro...</p>";
+
+    const respuesta = await fetch(`${SCRIPT_URL}?isbn=${isbn}`);
+    const libro = await respuesta.json();
+
+    if (!libro) {
+      resultado.innerHTML = `
+        <p style="color:red;">
+          Libro no encontrado
+        </p>
+      `;
+      return;
+    }
+
+    document.getElementById(campoDestinoId).value = libro.titulo;
+
+    resultado.innerHTML = `
+      <div style="
+        background:#fff;
+        border:1px solid #ddd;
+        border-radius:10px;
+        padding:10px;
+        margin-top:10px;
+      ">
+        <strong>Libro detectado:</strong><br>
+        ${libro.titulo}<br>
+        ISBN: ${libro.isbn}
+      </div>
+    `;
+
+    document.getElementById(inputISBNId).value = "";
+    document.getElementById(campoDestinoId).focus();
 
   } catch(error) {
     console.error(error);
