@@ -146,15 +146,53 @@
   <p id="estado">Conectando...</p>
 
   <div class="card">
-  <h2>Filtro global</h2>
+  <h2>Seleccionar colegio</h2>
 
-  <select
-    id="filtro-colegio-global"
-    onchange="aplicarFiltroGlobal()"
-  ></select>
+  <button onclick="abrirNuevoColegio()">
+    + Añadir colegio
+  </button>
 
-  <button onclick="limpiarFiltroGlobal()">
-    Ver todos los colegios
+  <div id="colegio-activo-label">
+    Ningún colegio seleccionado
+  </div>
+
+  <div id="lista-colegios"></div>
+</div>
+
+<div id="modal-colegio" class="card" style="display:none;">
+  <h2>Nuevo colegio</h2>
+
+  <input
+    id="nuevo-colegio-nombre"
+    placeholder="Nombre del colegio"
+  >
+
+  <input
+    id="nuevo-colegio-periodo"
+    placeholder="Periodo de venta"
+  >
+
+  <input
+    id="nuevo-colegio-promotor"
+    placeholder="Promotor"
+  >
+
+  <input
+    id="nuevo-colegio-cuenta"
+    placeholder="Cuenta"
+  >
+
+  <input
+    id="nuevo-colegio-password"
+    placeholder="Password"
+  >
+
+  <button onclick="guardarColegio()">
+    Guardar colegio
+  </button>
+
+  <button onclick="cerrarNuevoColegio()">
+    Cancelar
   </button>
 </div>
 
@@ -310,6 +348,7 @@
 
   <div id="lista-pedidos"></div>
 </div>
+	
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
@@ -318,79 +357,62 @@
     let colegioActivo = "";
 
     async function cargarPedidos() {
-      const estado = document.getElementById("estado");
-      const lista = document.getElementById("lista-pedidos");
+  const estado = document.getElementById("estado");
+  const lista = document.getElementById("lista-pedidos");
 
-      try {
-        estado.textContent = "Cargando pedidos...";
-        estado.className = "";
+  if (!colegioActivo) {
+    lista.innerHTML = `
+      <p>Selecciona un colegio para ver pedidos.</p>
+    `;
 
-        const respuesta = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
-        const datos = await respuesta.json();
-        const filas = datos.slice(1);
-	pedidosGlobal = filas;
-	pedidosFiltrados = filas;
+    estado.textContent = "Selecciona un colegio";
+    estado.className = "";
 
-        if (filas.length === 0) {
-          lista.innerHTML = "<p>No hay pedidos registrados.</p>";
-          estado.textContent = "Conectado a Google Sheets";
-          estado.className = "ok";
-          return;
-        }
+    return;
+  }
 
-        lista.innerHTML = "";
+  try {
+    estado.textContent = "Cargando pedidos...";
+    estado.className = "";
 
-        pedidosFiltrados.forEach(fila => {
-          const pedido = document.createElement("div");
-          pedido.className = "pedido";
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
+    const datos = await respuesta.json();
 
-          const id = fila[0];
-          const alumno = fila[1];
-          const grado = fila[2];
-          const colegio = fila[3];
-          const productos = fila[4];
-          const faltantes = fila[5] || "";
-          const status = fila[6] || "pendiente";
+    const filas = datos.slice(1);
 
-          pedido.innerHTML = `
-            <strong>#${id}</strong><br>
-            Alumno: ${alumno}<br>
-            Grado: ${grado}<br>
-            Colegio: ${colegio}<br>
-            Productos: ${productos}<br>
-            Faltantes: ${faltantes || "Ninguno"}<br>
-            Estado: <span class="status">${status}</span><br><br>
+    pedidosGlobal = filas;
+    pedidosFiltrados = filas;
 
-            <button onclick="marcarCompleto('${id}')">✓ Completo</button>
-            <button onclick="marcarIncompleto('${id}')">✗ Incompleto</button>
-            <button onclick="abrirPaqueteriaPorId('${id}')">📦 Registrar envío</button>
-          `;
+    filtrarPedidos();
 
-          lista.appendChild(pedido);
-        });
+    estado.textContent = "Conectado a Google Sheets";
+    estado.className = "ok";
 
-        estado.textContent = "Conectado a Google Sheets";
-        estado.className = "ok";
+  } catch (error) {
+    estado.textContent = "Error al conectar con Google Sheets";
+    estado.className = "error";
 
-      } catch (error) {
-        estado.textContent = "Error al conectar con Google Sheets";
-        estado.className = "error";
-        console.error(error);
-      }
-    }
+    console.error(error);
+  }
+}
+
+let colegiosGlobal = [];
 
 async function cargarColegios() {
   try {
     const respuesta = await fetch(`${SCRIPT_URL}?colegios=1`);
     const colegios = await respuesta.json();
 
+    colegiosGlobal = colegios;
+
+    renderColegios(colegios);
+
     const selects = [
-    "colegio",
-    "caja-colegio",
-    "prod-colegio",
-    "mov-colegio",
-    "filtro-colegio-global"
-   ];
+      "colegio",
+      "caja-colegio",
+      "prod-colegio",
+      "mov-colegio"
+    ];
 
     selects.forEach(id => {
       const select = document.getElementById(id);
@@ -398,15 +420,15 @@ async function cargarColegios() {
       if (!select) return;
 
       select.innerHTML = `
-        <option value="">
-          Selecciona colegio
-        </option>
+        <option value="">Selecciona colegio</option>
       `;
 
-      colegios.forEach(colegio => {
+      colegios.forEach(item => {
+        const nombre = item.colegio || item;
+
         select.innerHTML += `
-          <option value="${colegio}">
-            ${colegio}
+          <option value="${nombre}">
+            ${nombre}
           </option>
         `;
       });
@@ -417,12 +439,73 @@ async function cargarColegios() {
   }
 }
 
-function aplicarFiltroGlobal() {
-  colegioActivo = document
-    .getElementById("filtro-colegio-global")
-    .value;
+function renderColegios(colegios) {
+  const contenedor = document.getElementById("lista-colegios");
 
-  filtrarPedidos();
+  if (!contenedor) return;
+
+  if (!colegios || colegios.length === 0) {
+    contenedor.innerHTML = "<p>No hay colegios registrados.</p>";
+    return;
+  }
+
+  contenedor.innerHTML = colegios.map(item => {
+    const nombre = item.colegio || "";
+    const periodo = item.periodoVenta || "";
+    const promotor = item.promotor || "";
+    const cuenta = item.cuenta || "";
+    const password = item.password || "";
+
+    const activo =
+      normalizarTexto(nombre) === normalizarTexto(colegioActivo);
+
+    return `
+      <div style="
+        border:2px solid ${activo ? "#2a8a56" : "#ddd"};
+        border-radius:14px;
+        padding:14px;
+        margin:10px 0;
+        background:${activo ? "#effaf3" : "#fff"};
+      ">
+        <h3>${nombre}</h3>
+
+        <p>
+          <strong>Periodo:</strong><br>
+          ${periodo}
+        </p>
+
+        <p>
+          <strong>Promotor:</strong><br>
+          ${promotor}
+        </p>
+
+        <p>
+          <strong>Cuenta:</strong><br>
+          ${cuenta}
+        </p>
+
+        <p>
+          <strong>Password:</strong><br>
+          ${password}
+        </p>
+
+        <button onclick="seleccionarColegio('${nombre}')">
+          Entrar
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+
+function seleccionarColegio(nombre) {
+  colegioActivo = nombre;
+
+  document.getElementById("colegio-activo-label").innerHTML =
+    `<strong>Colegio activo:</strong> ${nombre}`;
+
+  renderColegios(colegiosGlobal);
+
+  cargarPedidos();
   cargarInventario();
   cargarAlertasFaltantes();
   cargarCajas();
@@ -431,7 +514,10 @@ function aplicarFiltroGlobal() {
 function limpiarFiltroGlobal() {
   colegioActivo = "";
 
-  document.getElementById("filtro-colegio-global").value = "";
+  document.getElementById("colegio-activo-label").innerHTML =
+    "Ningún colegio seleccionado";
+
+  renderColegios(colegiosGlobal);
 
   filtrarPedidos();
   cargarInventario();
@@ -439,25 +525,56 @@ function limpiarFiltroGlobal() {
   cargarCajas();
 }
 
+function abrirNuevoColegio() {
+  const modal = document.getElementById("modal-colegio");
+  modal.style.display = "block";
+
+  modal.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+function cerrarNuevoColegio() {
+  document.getElementById("modal-colegio").style.display = "none";
+
+  document.getElementById("nuevo-colegio-nombre").value = "";
+  document.getElementById("nuevo-colegio-periodo").value = "";
+  document.getElementById("nuevo-colegio-promotor").value = "";
+  document.getElementById("nuevo-colegio-cuenta").value = "";
+  document.getElementById("nuevo-colegio-password").value = "";
+}
+
 	function filtrarPedidos() {
-        const texto = document.getElementById("buscar-pedido").value.trim();
-
-        pedidosFiltrados = pedidosGlobal.filter(fila => {
-        const idPedido = String(fila[0]);
-        const colegioPedido = String(fila[3] || "");
-
-        const coincideTexto = !texto || idPedido.includes(texto);
-
-      const coincideColegio =
-       !colegioActivo ||
-        normalizarTexto(colegioPedido) === normalizarTexto(colegioActivo);
-
-       return coincideTexto && coincideColegio;
-   });
-
   const lista = document.getElementById("lista-pedidos");
 
   lista.innerHTML = "";
+
+  if (!colegioActivo) {
+    lista.innerHTML = `
+      <p>Selecciona un colegio para ver pedidos.</p>
+    `;
+    return;
+  }
+
+  const texto = document
+    .getElementById("buscar-pedido")
+    .value
+    .trim();
+
+  pedidosFiltrados = pedidosGlobal.filter(fila => {
+    const idPedido = String(fila[0]);
+    const colegioPedido = String(fila[3] || "");
+
+    const coincideTexto =
+      !texto || idPedido.includes(texto);
+
+    const coincideColegio =
+      normalizarTexto(colegioPedido) ===
+      normalizarTexto(colegioActivo);
+
+    return coincideTexto && coincideColegio;
+  });
 
   pedidosFiltrados.forEach(fila => {
     const pedido = document.createElement("div");
@@ -480,16 +597,94 @@ function limpiarFiltroGlobal() {
       Faltantes: ${faltantes || "Ninguno"}<br>
       Estado: <span class="status">${status}</span><br><br>
 
-      <button onclick="marcarCompleto('${id}')">✓ Completo</button>
-      <button onclick="marcarIncompleto('${id}')">✗ Incompleto</button>
-      <button onclick="abrirPaqueteriaPorId('${id}')">📦 Registrar envío</button>
+      <button onclick="marcarCompleto('${id}')">
+        ✓ Completo
+      </button>
+
+      <button onclick="marcarIncompleto('${id}')">
+        ✗ Incompleto
+      </button>
+
+      <button onclick="abrirPaqueteriaPorId('${id}')">
+        📦 Registrar envío
+      </button>
     `;
 
     lista.appendChild(pedido);
   });
 
   if (pedidosFiltrados.length === 0) {
-    lista.innerHTML = "<p>No se encontraron pedidos con ese filtro.</p>";
+    lista.innerHTML = `
+      <p>No se encontraron pedidos con ese filtro.</p>
+    `;
+  }
+}
+
+async function guardarColegio() {
+  const colegio = document
+    .getElementById("nuevo-colegio-nombre")
+    .value
+    .trim();
+
+  const periodoVenta = document
+    .getElementById("nuevo-colegio-periodo")
+    .value
+    .trim();
+
+  const promotor = document
+    .getElementById("nuevo-colegio-promotor")
+    .value
+    .trim();
+
+  const cuenta = document
+    .getElementById("nuevo-colegio-cuenta")
+    .value
+    .trim();
+
+  const password = document
+    .getElementById("nuevo-colegio-password")
+    .value
+    .trim();
+
+  if (
+    !colegio ||
+    !periodoVenta ||
+    !promotor ||
+    !cuenta ||
+    !password
+  ) {
+    alert("Completa todos los datos.");
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "crearColegio",
+        colegio,
+        periodoVenta,
+        promotor,
+        cuenta,
+        password
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Colegio guardado correctamente.");
+
+    cerrarNuevoColegio();
+    cargarColegios();
+
+  } catch(error) {
+    console.error(error);
+    alert("No se pudo guardar el colegio.");
   }
 }
 
@@ -990,23 +1185,27 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     }
 
     async function cargarCajas() {
-      try {
-        const respuesta = await fetch(`${SCRIPT_URL}?hoja=Cajas`);
-        const datos = await respuesta.json();
-        const filas = datos.slice(1);
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Cajas`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
 
-	const filtradas = colegioActivo
- 	 ? filas.filter(fila =>
-   	   normalizarTexto(fila[2]) === normalizarTexto(colegioActivo)
-   	 )
-  	: filas;
-
-        renderCajas(filtradas);
-
-      } catch(error) {
-        console.error(error);
-      }
+    if (!colegioActivo) {
+      document.getElementById("lista-cajas").innerHTML =
+        "<p>Selecciona un colegio para ver cajas.</p>";
+      return;
     }
+
+    const filtradas = filas.filter(fila =>
+      normalizarTexto(fila[2]) === normalizarTexto(colegioActivo)
+    );
+
+    renderCajas(filtradas);
+
+  } catch(error) {
+    console.error(error);
+  }
+}
 
     function renderCajas(filas) {
   const contenedor = document.getElementById("lista-cajas");
@@ -1286,22 +1485,26 @@ function imprimirCaja(caja) {
 }
 
     async function cargarInventario() {
-      try {
-        const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
-        const datos = await respuesta.json();
-        const filas = datos.slice(1);
-        const filtradas = colegioActivo
-         ? filas.filter(fila =>
-              normalizarTexto(fila[1]) === normalizarTexto(colegioActivo)
-           )
-         : filas;
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
 
-        renderInventario(filtradas);
-
-      } catch(error) {
-        console.error(error);
-      }
+    if (!colegioActivo) {
+      renderInventario([]);
+      return;
     }
+
+    const filtradas = filas.filter(fila =>
+      normalizarTexto(fila[1]) === normalizarTexto(colegioActivo)
+    );
+
+    renderInventario(filtradas);
+
+  } catch(error) {
+    console.error(error);
+  }
+}
 
     function renderInventario(filas) {
       const lista = document.getElementById("lista-inventario");
@@ -1388,37 +1591,39 @@ function imprimirCaja(caja) {
       `;
     }
 
-    async function cargarAlertasFaltantes() {
-      try {
-        const [resPedidos, resInventario] = await Promise.all([
-          fetch(`${SCRIPT_URL}?hoja=Pedidos`),
-          fetch(`${SCRIPT_URL}?hoja=Inventario`)
-        ]);
+async function cargarAlertasFaltantes() {
+  try {
+    const [resPedidos, resInventario] = await Promise.all([
+      fetch(`${SCRIPT_URL}?hoja=Pedidos`),
+      fetch(`${SCRIPT_URL}?hoja=Inventario`)
+    ]);
 
-        const pedidosData = await resPedidos.json();
-        const inventarioData = await resInventario.json();
+    const pedidosData = await resPedidos.json();
+    const inventarioData = await resInventario.json();
 
-        const pedidos = pedidosData.slice(1);
-        const inventario = inventarioData.slice(1);
+    const pedidos = pedidosData.slice(1);
+    const inventario = inventarioData.slice(1);
 
-	const pedidosFiltrados = colegioActivo
- 	 ? pedidos.filter(pedido =>
-  	    normalizarTexto(pedido[3]) === normalizarTexto(colegioActivo)
-   	 )
-  	: pedidos;
-
-	const inventarioFiltrado = colegioActivo
-  	? inventario.filter(inv =>
-      	normalizarTexto(inv[1]) === normalizarTexto(colegioActivo)
-   	 )
-	  : inventario;
-
-        renderAlertasFaltantes(pedidosFiltrados, inventarioFiltrado);
-
-      } catch (error) {
-        console.error(error);
-      }
+    if (!colegioActivo) {
+      document.getElementById("alertas-faltantes").innerHTML =
+        "<p>Selecciona un colegio para ver faltantes.</p>";
+      return;
     }
+
+    const pedidosFiltrados = pedidos.filter(pedido =>
+      normalizarTexto(pedido[3]) === normalizarTexto(colegioActivo)
+    );
+
+    const inventarioFiltrado = inventario.filter(inv =>
+      normalizarTexto(inv[1]) === normalizarTexto(colegioActivo)
+    );
+
+    renderAlertasFaltantes(pedidosFiltrados, inventarioFiltrado);
+
+  } catch (error) {
+    console.error(error);
+  }
+}
 
     function renderAlertasFaltantes(pedidos, inventario) {
       const contenedor = document.getElementById("alertas-faltantes");
