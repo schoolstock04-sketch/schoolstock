@@ -324,11 +324,20 @@
 </div>
 
   <div class="card">
-    <h2>Panel de inventario</h2>
-    <div id="kpis-inventario"></div>
-    <br>
-    <div id="lista-inventario"></div>
-  </div>
+  <h2>Panel de inventario</h2>
+
+  <button
+  id="btn-minimizar-inventario"
+  class="btn-secundario"
+  onclick="toggleInventarioAlertas()"
+>
+  Ocultar lista de inventario
+</button>
+
+  <div id="kpis-inventario"></div>
+  <br>
+  <div id="lista-inventario"></div>
+</div>
 
   <div class="card">
     <h2>Productos que bloquean pedidos</h2>
@@ -355,6 +364,7 @@
     let pedidosGlobal = [];
     let pedidosFiltrados = [];
     let colegioActivo = "";
+    let soloAlertasInventario = false;
 
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
@@ -456,6 +466,13 @@ function renderColegios(colegios) {
     const cuenta = item.cuenta || "";
     const password = item.password || "";
 
+    if (
+      colegioActivo &&
+      normalizarTexto(nombre) !== normalizarTexto(colegioActivo)
+    ) {
+      return "";
+    }
+
     const activo =
       normalizarTexto(nombre) === normalizarTexto(colegioActivo);
 
@@ -469,29 +486,22 @@ function renderColegios(colegios) {
       ">
         <h3>${nombre}</h3>
 
-        <p>
-          <strong>Periodo:</strong><br>
-          ${periodo}
-        </p>
-
-        <p>
-          <strong>Promotor:</strong><br>
-          ${promotor}
-        </p>
-
-        <p>
-          <strong>Cuenta:</strong><br>
-          ${cuenta}
-        </p>
-
-        <p>
-          <strong>Password:</strong><br>
-          ${password}
-        </p>
+        <p><strong>Periodo:</strong><br>${periodo}</p>
+        <p><strong>Promotor:</strong><br>${promotor}</p>
+        <p><strong>Cuenta:</strong><br>${cuenta}</p>
+        <p><strong>Password:</strong><br>${password}</p>
 
         <button onclick="seleccionarColegio('${nombre}')">
           Entrar
         </button>
+
+        ${
+          colegioActivo
+            ? `<button class="btn-secundario" onclick="limpiarFiltroGlobal()">
+                 Mostrar todos los colegios
+               </button>`
+            : ""
+        }
       </div>
     `;
   }).join("");
@@ -1506,90 +1516,117 @@ function imprimirCaja(caja) {
   }
 }
 
+function toggleInventarioAlertas() {
+  soloAlertasInventario = !soloAlertasInventario;
+
+  document.getElementById("btn-minimizar-inventario").textContent =
+    soloAlertasInventario
+      ? "Mostrar lista de inventario"
+      : "Ocultar lista de inventario";
+
+  cargarInventario();
+}
+
     function renderInventario(filas) {
-      const lista = document.getElementById("lista-inventario");
-      const kpis = document.getElementById("kpis-inventario");
+  const lista = document.getElementById("lista-inventario");
+  const kpis = document.getElementById("kpis-inventario");
 
-      lista.innerHTML = "";
+  lista.innerHTML = "";
 
-      let ok = 0;
-      let low = 0;
-      let zero = 0;
+  let ok = 0;
+  let low = 0;
+  let zero = 0;
 
-      filas.forEach(fila => {
-        const nombre = fila[0];
-        const colegio = fila[1];
-        const stock = Number(fila[2]);
-        const max = Number(fila[3]) || 20;
+  filas.forEach(fila => {
+    const stock = Number(fila[2]);
 
-        let clase = "stock-ok";
-        let estado = "OK";
-        let color = "#2a8a56";
+    if (stock <= 0) zero++;
+    else if (stock <= 5) low++;
+    else ok++;
+  });
 
-        if(stock <= 0) {
-          clase = "stock-zero";
-          estado = "SIN STOCK";
-          color = "#d94f2b";
-          zero++;
-        }
-        else if(stock <= 5) {
-          clase = "stock-low";
-          estado = "BAJO";
-          color = "#d48b00";
-          low++;
-        }
-        else {
-          ok++;
-        }
+  kpis.innerHTML = `
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div class="card" style="flex:1; min-width:120px;">
+        <h3 style="color:green;">${ok}</h3>
+        <p>Stock OK</p>
+      </div>
 
-        const porcentaje = Math.min((stock / max) * 100, 100);
+      <div class="card" style="flex:1; min-width:120px;">
+        <h3 style="color:orange;">${low}</h3>
+        <p>Stock bajo</p>
+      </div>
 
-        lista.innerHTML += `
-          <div style="
-            border:1px solid #ddd;
-            border-radius:10px;
-            padding:12px;
-            margin-bottom:12px;
-            background:white;
-          ">
-            <strong>${nombre}</strong><br>
-            <span style="color:#666">${colegio}</span>
+      <div class="card" style="flex:1; min-width:120px;">
+        <h3 style="color:red;">${zero}</h3>
+        <p>Sin stock</p>
+      </div>
+    </div>
+  `;
 
-            <div class="${clase}">
-              ${estado} — ${stock}/${max}
-            </div>
+  if (soloAlertasInventario) {
+    lista.innerHTML = `
+      <p>Lista de inventario oculta.</p>
+    `;
+    return;
+  }
 
-            <div class="barra-stock">
-              <div class="barra-fill"
-                style="
-                  width:${porcentaje}%;
-                  background:${color};
-                ">
-              </div>
-            </div>
-          </div>
-        `;
-      });
+  filas.forEach(fila => {
+    const nombre = fila[0];
+    const colegio = fila[1];
+    const stock = Number(fila[2]);
+    const max = Number(fila[3]) || 20;
 
-      kpis.innerHTML = `
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <div class="card" style="flex:1; min-width:120px;">
-            <h3 style="color:green;">${ok}</h3>
-            <p>Stock OK</p>
-          </div>
+    let clase = "stock-ok";
+    let estado = "OK";
+    let color = "#2a8a56";
 
-          <div class="card" style="flex:1; min-width:120px;">
-            <h3 style="color:orange;">${low}</h3>
-            <p>Stock bajo</p>
-          </div>
+    if(stock <= 0) {
+      clase = "stock-zero";
+      estado = "SIN STOCK";
+      color = "#d94f2b";
+    }
+    else if(stock <= 5) {
+      clase = "stock-low";
+      estado = "BAJO";
+      color = "#d48b00";
+    }
 
-          <div class="card" style="flex:1; min-width:120px;">
-            <h3 style="color:red;">${zero}</h3>
-            <p>Sin stock</p>
+    const porcentaje = Math.min((stock / max) * 100, 100);
+
+    lista.innerHTML += `
+      <div style="
+        border:1px solid #ddd;
+        border-radius:10px;
+        padding:12px;
+        margin-bottom:12px;
+        background:white;
+      ">
+        <strong>${nombre}</strong><br>
+        <span style="color:#666">${colegio}</span>
+
+        <div class="${clase}">
+          ${estado} — ${stock}/${max}
+        </div>
+
+        <div class="barra-stock">
+          <div class="barra-fill"
+            style="
+              width:${porcentaje}%;
+              background:${color};
+            ">
           </div>
         </div>
-      `;
-    }
+      </div>
+    `;
+  });
+
+  if (filas.length === 0) {
+    lista.innerHTML = `
+      <p>No hay productos para mostrar.</p>
+    `;
+  }
+}
 
 async function cargarAlertasFaltantes() {
   try {
