@@ -754,7 +754,7 @@ function leerQRPedido(event) {
 
   if (!texto) return;
 
-  const partes = texto.split("]");
+  const partes = texto.split("+");
 
   if (partes.length < 4) {
     alert("QR inválido. Formato esperado: pedido]alumno]grado]colegio");
