@@ -365,6 +365,7 @@
     let pedidosFiltrados = [];
     let colegioActivo = "";
     let soloAlertasInventario = false;
+    const cacheISBN = {};
 
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
@@ -823,11 +824,7 @@ async function buscarISBN() {
   try {
     resultado.innerHTML = "<p>Buscando libro...</p>";
 
-    const respuesta = await fetch(
-      `${SCRIPT_URL}?isbn=${isbn}`
-    );
-
-    const libro = await respuesta.json();
+    const libro = await obtenerLibroPorISBN(isbn);
 
     if (!libro) {
       resultado.innerHTML = `
@@ -842,7 +839,8 @@ async function buscarISBN() {
     const productosActuales = inputProductos.value.trim();
 
     if (productosActuales) {
-      inputProductos.value = productosActuales + "/" + libro.titulo;
+      inputProductos.value =
+        productosActuales + "/" + libro.titulo;
     } else {
       inputProductos.value = libro.titulo;
     }
@@ -873,6 +871,21 @@ async function buscarISBN() {
       </p>
     `;
   }
+}
+
+async function obtenerLibroPorISBN(isbn) {
+  if (cacheISBN[isbn]) {
+    return cacheISBN[isbn];
+  }
+
+  const respuesta = await fetch(`${SCRIPT_URL}?isbn=${isbn}`);
+  const libro = await respuesta.json();
+
+  if (libro) {
+    cacheISBN[isbn] = libro;
+  }
+
+  return libro;
 }
 
 function leerISBNProducto(event) {
@@ -908,8 +921,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   try {
     resultado.innerHTML = "<p>Buscando libro...</p>";
 
-    const respuesta = await fetch(`${SCRIPT_URL}?isbn=${isbn}`);
-    const libro = await respuesta.json();
+    const libro = await obtenerLibroPorISBN(isbn);
 
     if (!libro) {
       resultado.innerHTML = `
