@@ -339,10 +339,15 @@
   <div id="lista-inventario"></div>
 </div>
 
-  <div class="card">
-    <h2>Productos que bloquean pedidos</h2>
-    <div id="alertas-faltantes"></div>
-  </div>
+ <div class="card">
+  <h2>Productos que bloquean pedidos</h2>
+
+  <button class="btn-secundario" onclick="descargarFaltantesExcel()">
+    Descargar faltantes
+  </button>
+
+  <div id="alertas-faltantes"></div>
+</div>
 
   <div class="card">
   <h2>Pedidos registrados</h2>
@@ -366,6 +371,7 @@
     let colegioActivo = "";
     let colegioEditando = "";
     let soloAlertasInventario = false;
+    let faltantesGlobal = [];
     const cacheISBN = {};
 
     async function cargarPedidos() {
@@ -1726,6 +1732,7 @@ async function cargarAlertasFaltantes() {
 
       const alertas = Object.values(mapa)
         .sort((a, b) => b.pedidos - a.pedidos);
+        faltantesGlobal = alertas;
 
       if (alertas.length === 0) {
         contenedor.innerHTML = "<p>No hay productos bloqueando pedidos.</p>";
@@ -1741,6 +1748,35 @@ async function cargarAlertasFaltantes() {
         </div>
       `).join("");
     }
+
+function descargarFaltantesExcel() {
+  if (!faltantesGlobal || faltantesGlobal.length === 0) {
+    alert("No hay faltantes para descargar.");
+    return;
+  }
+
+  let csv = "Producto,Colegio,Pedidos bloqueados,Stock actual\n";
+
+  faltantesGlobal.forEach(item => {
+    csv += `"${item.producto}","${item.colegio}","${item.pedidos}","${item.stock}"\n`;
+  });
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = `faltantes_${colegioActivo || "todos"}.csv`;
+
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+
+  URL.revokeObjectURL(url);
+}
 
     function normalizarTexto(texto) {
       return String(texto)
