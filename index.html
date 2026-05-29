@@ -364,6 +364,7 @@
     let pedidosGlobal = [];
     let pedidosFiltrados = [];
     let colegioActivo = "";
+    let colegioEditando = "";
     let soloAlertasInventario = false;
     const cacheISBN = {};
 
@@ -496,6 +497,19 @@ function renderColegios(colegios) {
           Entrar
         </button>
 
+        <button
+          class="btn-secundario"
+          onclick="editarColegio(
+            '${nombre}',
+            '${periodo}',
+            '${promotor}',
+            '${cuenta}',
+            '${password}'
+          )"
+        >
+          Editar
+        </button>
+
         ${
           colegioActivo
             ? `<button class="btn-secundario" onclick="limpiarFiltroGlobal()">
@@ -546,6 +560,24 @@ function abrirNuevoColegio() {
   });
 }
 
+function editarColegio(
+  nombre,
+  periodo,
+  promotor,
+  cuenta,
+  password
+) {
+  colegioEditando = nombre;
+
+  document.getElementById("nuevo-colegio-nombre").value = nombre;
+  document.getElementById("nuevo-colegio-periodo").value = periodo;
+  document.getElementById("nuevo-colegio-promotor").value = promotor;
+  document.getElementById("nuevo-colegio-cuenta").value = cuenta;
+  document.getElementById("nuevo-colegio-password").value = password;
+
+  document.getElementById("modal-colegio").style.display = "block";
+}
+
 function cerrarNuevoColegio() {
   document.getElementById("modal-colegio").style.display = "none";
 
@@ -554,6 +586,8 @@ function cerrarNuevoColegio() {
   document.getElementById("nuevo-colegio-promotor").value = "";
   document.getElementById("nuevo-colegio-cuenta").value = "";
   document.getElementById("nuevo-colegio-password").value = "";
+
+  colegioEditando = "";
 }
 
 	function filtrarPedidos() {
@@ -632,38 +666,13 @@ function cerrarNuevoColegio() {
 }
 
 async function guardarColegio() {
-  const colegio = document
-    .getElementById("nuevo-colegio-nombre")
-    .value
-    .trim();
+  const colegio = document.getElementById("nuevo-colegio-nombre").value.trim();
+  const periodoVenta = document.getElementById("nuevo-colegio-periodo").value.trim();
+  const promotor = document.getElementById("nuevo-colegio-promotor").value.trim();
+  const cuenta = document.getElementById("nuevo-colegio-cuenta").value.trim();
+  const password = document.getElementById("nuevo-colegio-password").value.trim();
 
-  const periodoVenta = document
-    .getElementById("nuevo-colegio-periodo")
-    .value
-    .trim();
-
-  const promotor = document
-    .getElementById("nuevo-colegio-promotor")
-    .value
-    .trim();
-
-  const cuenta = document
-    .getElementById("nuevo-colegio-cuenta")
-    .value
-    .trim();
-
-  const password = document
-    .getElementById("nuevo-colegio-password")
-    .value
-    .trim();
-
-  if (
-    !colegio ||
-    !periodoVenta ||
-    !promotor ||
-    !cuenta ||
-    !password
-  ) {
+  if (!colegio || !periodoVenta || !promotor || !cuenta || !password) {
     alert("Completa todos los datos.");
     return;
   }
@@ -672,7 +681,8 @@ async function guardarColegio() {
     const respuesta = await fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
-        accion: "crearColegio",
+        accion: colegioEditando ? "actualizarColegio" : "crearColegio",
+        colegioOriginal: colegioEditando,
         colegio,
         periodoVenta,
         promotor,
@@ -688,7 +698,7 @@ async function guardarColegio() {
       return;
     }
 
-    alert("Colegio guardado correctamente.");
+    alert(colegioEditando ? "Colegio actualizado correctamente." : "Colegio guardado correctamente.");
 
     cerrarNuevoColegio();
     cargarColegios();
@@ -698,6 +708,7 @@ async function guardarColegio() {
     alert("No se pudo guardar el colegio.");
   }
 }
+
 
     async function guardarPedido() {
       const id = document.getElementById("id").value.trim();
