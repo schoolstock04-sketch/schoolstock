@@ -147,6 +147,12 @@
 
   <div class="card">
   <h2>Seleccionar colegio</h2>
+  
+  <input
+  id="buscar-colegio"
+  placeholder="Buscar colegio"
+  oninput="renderColegios(colegiosGlobal)"
+  >
 
   <button onclick="abrirNuevoColegio()">
     + Añadir colegio
@@ -467,12 +473,23 @@ function renderColegios(colegios) {
     return;
   }
 
+  const textoBusqueda = document.getElementById("buscar-colegio")
+    ? document.getElementById("buscar-colegio").value.trim()
+    : "";
+
   contenedor.innerHTML = colegios.map(item => {
     const nombre = item.colegio || "";
     const periodo = item.periodoVenta || "";
     const promotor = item.promotor || "";
     const cuenta = item.cuenta || "";
     const password = item.password || "";
+
+    if (
+      textoBusqueda &&
+      !normalizarTexto(nombre).includes(normalizarTexto(textoBusqueda))
+    ) {
+      return "";
+    }
 
     if (
       colegioActivo &&
