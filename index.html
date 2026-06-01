@@ -298,22 +298,41 @@
   </div>
 
   <div class="card">
-    <h2>Relación de cajas</h2>
+  <h2>Relación de cajas</h2>
 
-    <input id="caja-numero" placeholder="Número de caja. Ej. Caja 1">
-    <select id="caja-colegio"></select>
+  <input id="caja-numero" placeholder="Número de caja. Ej. Caja 1">
+  <select id="caja-colegio"></select>
 
-    <input
-      id="caja-pedido"
-      placeholder="Escanea o escribe número de pedido"
-      onkeydown="leerPedidoCaja(event)"
-    >
+  <input
+    id="caja-pedido"
+    placeholder="Escanea o escribe número de pedido"
+    onkeydown="leerPedidoCaja(event)"
+  >
 
-    <button onclick="agregarPedidoACaja()">Agregar pedido a caja</button>
-    <button class="btn-secundario" onclick="cargarCajas()">Actualizar relación</button>
+  <button onclick="agregarPedidoACaja()">
+    Agregar pedido a caja
+  </button>
 
-    <div id="lista-cajas"></div>
-  </div>
+  <button
+    class="btn-secundario"
+    onclick="cargarCajas()"
+  >
+    Actualizar relación
+  </button>
+
+  <button
+    style="
+      background:#d94f2b;
+      color:white;
+    "
+    onclick="cerrarLoteCajas()"
+  >
+    📦 Cerrar lote de cajas
+  </button>
+
+  <div id="lista-cajas"></div>
+</div>
+
 
 <div class="card">
   <h2>Buscar ubicación de pedido</h2>
@@ -1239,6 +1258,41 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
         alert("No se pudo agregar el pedido a la caja.");
       }
     }
+
+async function cerrarLoteCajas() {
+  const confirmar = confirm(
+    "¿Cerrar lote actual de cajas?\n\nEsto moverá todas las cajas al histórico."
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "cerrarLoteCajas"
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert(
+      "Lote cerrado correctamente.\n\n" +
+      resultado.lote
+    );
+
+    cargarCajas();
+
+  } catch(error) {
+    console.error(error);
+    alert("No se pudo cerrar el lote.");
+  }
+}
 
     async function cargarCajas() {
   try {
