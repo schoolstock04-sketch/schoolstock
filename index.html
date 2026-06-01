@@ -1263,7 +1263,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   }
 }
 
-    function renderCajas(filas) {
+  function renderCajas(filas) {
   const contenedor = document.getElementById("lista-cajas");
 
   if (!filas || filas.length === 0) {
@@ -1308,6 +1308,8 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
       normalizarTexto(p.colegioCaja) !== normalizarTexto(p.colegioPedido)
     ).length;
 
+    const idDetalle = "detalle-" + caja.replace(/\s+/g, "-");
+
     return `
       <div style="
         border:1px solid #ddd;
@@ -1323,33 +1325,56 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
           ${errores > 0 ? `<br><strong style="color:red;">⚠ ${errores} pedido(s) de otro colegio</strong>` : ""}
         </p>
 
+        <button class="btn-secundario" onclick="toggleDetalleCaja('${idDetalle}')">
+          Ver / Ocultar pedidos
+        </button>
+
         <button class="btn-secundario" onclick="imprimirCaja('${caja}')">
           🖨 Imprimir relación
         </button>
 
-        ${data.pedidos.map(p => {
-          const errorColegio =
-            normalizarTexto(p.colegioCaja) !== normalizarTexto(p.colegioPedido);
+        <div id="${idDetalle}" style="display:none; margin-top:12px;">
+          ${data.pedidos.map(p => {
+            const errorColegio =
+              normalizarTexto(p.colegioCaja) !== normalizarTexto(p.colegioPedido);
 
-          return `
-            <div style="
-              border-top:1px solid #eee;
-              padding:8px 0;
-              ${errorColegio ? "background:#fff1ee;" : ""}
-            ">
-              <strong>#${p.pedido}</strong><br>
-              Alumno: ${p.alumno}<br>
-              Grado: ${p.grado}<br>
-              Colegio pedido:
-              <span style="color:${errorColegio ? "red" : "green"}; font-weight:bold;">
-                ${p.colegioPedido}
-              </span>
-            </div>
-          `;
-        }).join("")}
+            return `
+              <div style="
+                border-top:1px solid #eee;
+                padding:8px 0;
+                ${errorColegio ? "background:#fff1ee;" : ""}
+              ">
+                <strong>#${p.pedido}</strong><br>
+                Alumno: ${p.alumno}<br>
+                Grado: ${p.grado}<br>
+                Colegio pedido:
+                <span style="color:${errorColegio ? "red" : "green"}; font-weight:bold;">
+                  ${p.colegioPedido}
+                </span>
+
+                <br><br>
+
+                <button onclick="retirarPedidoCaja('${p.pedido}')">
+                  Retirar de caja
+                </button>
+              </div>
+            `;
+          }).join("")}
+        </div>
       </div>
     `;
   }).join("");
+}
+
+function toggleDetalleCaja(idDetalle) {
+  const detalle = document.getElementById(idDetalle);
+
+  if (!detalle) return;
+
+  detalle.style.display =
+    detalle.style.display === "none"
+      ? "block"
+      : "none";
 }
 
 function leerBusquedaUbicacion(event) {
