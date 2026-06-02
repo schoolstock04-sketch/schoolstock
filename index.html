@@ -1064,42 +1064,58 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     }
 
     async function guardarProducto() {
-      const nombre = document.getElementById("prod-nombre").value.trim();
-      const colegio = document.getElementById("prod-colegio").value.trim();
-      const stock = Number(document.getElementById("prod-stock").value);
-      const max = Number(document.getElementById("prod-max").value) || 20;
+  const nombre = document.getElementById("prod-nombre").value.trim();
+  const colegio = document.getElementById("prod-colegio").value.trim();
+  const stock = Number(document.getElementById("prod-stock").value);
+  const max = Number(document.getElementById("prod-max").value) || 20;
 
-      if (!nombre || !colegio || isNaN(stock) || stock < 0) {
-        alert("Completa nombre, colegio y stock inicial.");
-        return;
-      }
+  if (!nombre || !colegio || isNaN(stock) || stock < 0) {
+    alert("Completa nombre, colegio y stock inicial.");
+    return;
+  }
 
-      try {
-        const respuesta = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            accion: "crear",
-            hoja: "Inventario",
-            fila: [nombre, colegio, stock, max]
-          })
-        });
+  if (max < stock) {
+    alert("El stock máximo no puede ser menor que el stock inicial.");
+    return;
+  }
 
-        const resultado = await respuesta.json();
+  const backorder = max - stock;
+  const surtidos = 0;
 
-        if (!resultado.ok) {
-          alert("Error: " + resultado.error);
-          return;
-        }
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "crear",
+        hoja: "Inventario",
+        fila: [
+          nombre,
+          colegio,
+          stock,
+          max,
+          backorder,
+          surtidos
+        ]
+      })
+    });
 
-        alert("Producto creado correctamente.");
-        cerrarNuevoProducto();
-        cargarInventario();
+    const resultado = await respuesta.json();
 
-      } catch (error) {
-        alert("No se pudo crear el producto.");
-        console.error(error);
-      }
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
     }
+
+    alert("Producto creado correctamente.");
+    cerrarNuevoProducto();
+    cargarInventario();
+
+  } catch (error) {
+    alert("No se pudo crear el producto.");
+    console.error(error);
+  }
+}
+
 
     function abrirMovimientoInventario() {
       document.getElementById("modal-movimiento").style.display = "block";
@@ -1663,7 +1679,7 @@ function toggleInventarioAlertas() {
   let zero = 0;
 
   filas.forEach(fila => {
-    const stock = Number(fila[2]);
+    const stock = Number(fila[2]) || 0;
 
     if (stock <= 0) zero++;
     else if (stock <= 5) low++;
@@ -1699,19 +1715,21 @@ function toggleInventarioAlertas() {
   filas.forEach(fila => {
     const nombre = fila[0];
     const colegio = fila[1];
-    const stock = Number(fila[2]);
+    const stock = Number(fila[2]) || 0;
     const max = Number(fila[3]) || 20;
+    const backorder = Number(fila[4]) || 0;
+    const surtidos = Number(fila[5]) || 0;
 
     let clase = "stock-ok";
     let estado = "OK";
     let color = "#2a8a56";
 
-    if(stock <= 0) {
+    if (stock <= 0) {
       clase = "stock-zero";
       estado = "SIN STOCK";
       color = "#d94f2b";
     }
-    else if(stock <= 5) {
+    else if (stock <= 5) {
       clase = "stock-low";
       estado = "BAJO";
       color = "#d48b00";
@@ -1731,7 +1749,18 @@ function toggleInventarioAlertas() {
         <span style="color:#666">${colegio}</span>
 
         <div class="${clase}">
-          ${estado} — ${stock}/${max}
+          ${estado} — Stock: ${stock}/${max}
+        </div>
+
+        <div style="
+          margin-top:8px;
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+          font-size:14px;
+        ">
+          <span>📦 Backorder: <strong>${backorder}</strong></span>
+          <span>✅ Surtidos: <strong>${surtidos}</strong></span>
         </div>
 
         <div class="barra-stock">
