@@ -300,8 +300,10 @@
   <div class="card">
   <h2>Relación de cajas</h2>
 
-  <input id="caja-numero" placeholder="Número de caja. Ej. Caja 1">
-  <select id="caja-colegio"></select>
+  <input
+    id="caja-numero"
+    placeholder="Número de caja. Ej. Caja 1"
+  >
 
   <input
     id="caja-pedido"
@@ -331,6 +333,9 @@
   >
     📦 Cerrar lote de cajas
   </button>
+
+  <div id="lista-cajas"></div>
+</div>
 
   <div id="lista-cajas"></div>
 </div>
@@ -396,6 +401,7 @@
     let pedidosGlobal = [];
     let pedidosFiltrados = [];
     let colegioActivo = "";
+    let colegioDetectadoCaja = "";
     let colegioEditando = "";
     let soloAlertasInventario = false;
     let faltantesGlobal = [];
@@ -1232,7 +1238,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
       procesarQRCaja();
     }
 
-  function procesarQRCaja() {
+function procesarQRCaja() {
   const input = document.getElementById("caja-pedido");
   const resumen = document.getElementById("resumen-qr-caja");
 
@@ -1242,38 +1248,57 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
 
   const partes = texto.split("+");
 
-  const pedido = partes[0] ? partes[0].trim() : "";
-  const alumno = partes[1] ? partes[1].trim() : "";
-  const grado = partes[2] ? partes[2].trim() : "";
-  const colegio = partes[3] ? partes[3].trim() : "";
-
-  input.value = pedido;
-
-  if (partes.length >= 4) {
+  if (partes.length < 4) {
     resumen.innerHTML = `
       <div style="
-        background:#effaf3;
-        border:1px solid #2a8a56;
+        background:#fff1ee;
+        border:1px solid #d94f2b;
         border-radius:10px;
         padding:8px;
         margin-top:10px;
-        font-weight:bold;
       ">
-        ✓ #${pedido} | ${alumno} | ${colegio}
+        QR no válido.
       </div>
     `;
-  } else {
-    resumen.innerHTML = "";
+    return;
   }
+
+  const pedido = partes[0].trim();
+  const alumno = partes[1].trim();
+  const grado = partes[2].trim();
+  const colegio = partes[3].trim();
+
+  input.value = pedido;
+
+  colegioDetectadoCaja = colegio;
+
+  resumen.innerHTML = `
+    <div style="
+      background:#effaf3;
+      border:1px solid #2a8a56;
+      border-radius:10px;
+      padding:8px;
+      margin-top:10px;
+      font-weight:bold;
+    ">
+      ✓ #${pedido} | ${alumno} | ${grado} | ${colegio}
+    </div>
+  `;
 }
 
-    async function agregarPedidoACaja() {
+   async function agregarPedidoACaja() {
   const caja = document.getElementById("caja-numero").value.trim();
-  const colegioCaja = document.getElementById("caja-colegio").value.trim();
   const pedido = document.getElementById("caja-pedido").value.trim();
 
-  if (!caja || !colegioCaja || !pedido) {
-    alert("Completa número de caja, colegio de caja y pedido.");
+  const colegioCaja = colegioDetectadoCaja;
+
+  if (!caja || !pedido) {
+    alert("Completa número de caja y pedido.");
+    return;
+  }
+
+  if (!colegioCaja) {
+    alert("Primero escanea un QR válido.");
     return;
   }
 
@@ -1299,6 +1324,9 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
 
     document.getElementById("caja-pedido").value = "";
     document.getElementById("resumen-qr-caja").innerHTML = "";
+
+    colegioDetectadoCaja = "";
+
     document.getElementById("caja-pedido").focus();
 
     cargarCajas();
