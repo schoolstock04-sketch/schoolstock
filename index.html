@@ -309,6 +309,8 @@
     onkeydown="leerPedidoCaja(event)"
   >
 
+  <div id="resumen-qr-caja"></div>
+
   <button onclick="agregarPedidoACaja()">
     Agregar pedido a caja
   </button>
@@ -1224,56 +1226,89 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
 
     function leerPedidoCaja(event) {
       if (event.key !== "Enter") return;
-      agregarPedidoACaja();
+
+      event.preventDefault();
+
+      procesarQRCaja();
     }
+
+  function procesarQRCaja() {
+  const input = document.getElementById("caja-pedido");
+  const resumen = document.getElementById("resumen-qr-caja");
+
+  const texto = input.value.trim();
+
+  if (!texto) return;
+
+  const partes = texto.split("+");
+
+  const pedido = partes[0] ? partes[0].trim() : "";
+  const alumno = partes[1] ? partes[1].trim() : "";
+  const grado = partes[2] ? partes[2].trim() : "";
+  const colegio = partes[3] ? partes[3].trim() : "";
+
+  input.value = pedido;
+
+  if (partes.length >= 4) {
+    resumen.innerHTML = `
+      <div style="
+        background:#effaf3;
+        border:1px solid #2a8a56;
+        border-radius:10px;
+        padding:8px;
+        margin-top:10px;
+        font-weight:bold;
+      ">
+        ✓ #${pedido} | ${alumno} | ${colegio}
+      </div>
+    `;
+  } else {
+    resumen.innerHTML = "";
+  }
+}
 
     async function agregarPedidoACaja() {
-      const caja = document.getElementById("caja-numero").value.trim();
-      const colegioCaja = document.getElementById("caja-colegio").value.trim();
-      const pedido = document.getElementById("caja-pedido").value.trim();
+  const caja = document.getElementById("caja-numero").value.trim();
+  const colegioCaja = document.getElementById("caja-colegio").value.trim();
+  const pedido = document.getElementById("caja-pedido").value.trim();
 
-      if (!caja || !colegioCaja || !pedido) {
-        alert("Completa número de caja, colegio de caja y pedido.");
-        return;
-      }
+  if (!caja || !colegioCaja || !pedido) {
+    alert("Completa número de caja, colegio de caja y pedido.");
+    return;
+  }
 
-      try {
-        const respuesta = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            accion: "registrarCaja",
-            caja: caja,
-            colegioCaja: colegioCaja,
-            pedido: pedido
-          })
-        });
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "registrarCaja",
+        caja: caja,
+        colegioCaja: colegioCaja,
+        pedido: pedido
+      })
+    });
 
-        const resultado = await respuesta.json();
+    const resultado = await respuesta.json();
 
-        if (!resultado.ok) {
-          alert("Error: " + resultado.error);
-          return;
-        }
-
-        if (resultado.mismoColegio) {
-          alert("Pedido agregado a caja correctamente.");
-        } else {
-          alert(
-            "Pedido agregado, pero OJO: pertenece a otro colegio. Colegio del pedido: " +
-            resultado.colegioPedido
-          );
-        }
-
-        document.getElementById("caja-pedido").value = "";
-        document.getElementById("caja-pedido").focus();
-
-        cargarCajas();
-
-      } catch(error) {
-        console.error(error);
-        alert("No se pudo agregar el pedido a la caja.");
-      }
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
     }
+
+    alert("Pedido agregado a caja correctamente.");
+
+    document.getElementById("caja-pedido").value = "";
+    document.getElementById("resumen-qr-caja").innerHTML = "";
+    document.getElementById("caja-pedido").focus();
+
+    cargarCajas();
+
+  } catch(error) {
+    console.error(error);
+    alert("No se pudo agregar el pedido a la caja.");
+  }
+}
+
 
 async function cerrarLoteCajas() {
   const confirmar = confirm(
