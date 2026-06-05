@@ -193,6 +193,11 @@
     placeholder="Password"
   >
 
+  <input
+  id="nuevo-colegio-alias"
+  placeholder="Alias QR del colegio"
+  >
+
   <button onclick="guardarColegio()">
     Guardar colegio
   </button>
@@ -545,6 +550,7 @@ function renderColegios(colegios) {
     const promotor = item.promotor || "";
     const cuenta = item.cuenta || "";
     const password = item.password || "";
+    const aliasQR = item.aliasQR || "";
 
     if (
       textoBusqueda &&
@@ -578,6 +584,12 @@ function renderColegios(colegios) {
         <p><strong>Cuenta:</strong><br>${cuenta}</p>
         <p><strong>Password:</strong><br>${password}</p>
 
+        ${
+          aliasQR
+            ? `<p><strong>Alias QR:</strong><br>${aliasQR}</p>`
+            : ""
+        }
+
         <button onclick="seleccionarColegio('${nombre}')">
           Entrar
         </button>
@@ -589,7 +601,8 @@ function renderColegios(colegios) {
             '${periodo}',
             '${promotor}',
             '${cuenta}',
-            '${password}'
+            '${password}',
+            '${aliasQR}'
           )"
         >
           Editar
@@ -650,7 +663,8 @@ function editarColegio(
   periodo,
   promotor,
   cuenta,
-  password
+  password,
+  aliasQR
 ) {
   colegioEditando = nombre;
 
@@ -659,6 +673,7 @@ function editarColegio(
   document.getElementById("nuevo-colegio-promotor").value = promotor;
   document.getElementById("nuevo-colegio-cuenta").value = cuenta;
   document.getElementById("nuevo-colegio-password").value = password;
+  document.getElementById("nuevo-colegio-alias").value = aliasQR || "";
 
   document.getElementById("modal-colegio").style.display = "block";
 }
@@ -671,11 +686,12 @@ function cerrarNuevoColegio() {
   document.getElementById("nuevo-colegio-promotor").value = "";
   document.getElementById("nuevo-colegio-cuenta").value = "";
   document.getElementById("nuevo-colegio-password").value = "";
+  document.getElementById("nuevo-colegio-alias").value = "";
 
   colegioEditando = "";
 }
-
-	function filtrarPedidos() {
+	
+  function filtrarPedidos() {
   const lista = document.getElementById("lista-pedidos");
 
   lista.innerHTML = "";
@@ -750,15 +766,16 @@ function cerrarNuevoColegio() {
   }
 }
 
-async function guardarColegio() {
+  async function guardarColegio() {
   const colegio = document.getElementById("nuevo-colegio-nombre").value.trim();
   const periodoVenta = document.getElementById("nuevo-colegio-periodo").value.trim();
   const promotor = document.getElementById("nuevo-colegio-promotor").value.trim();
   const cuenta = document.getElementById("nuevo-colegio-cuenta").value.trim();
   const password = document.getElementById("nuevo-colegio-password").value.trim();
+  const aliasQR = document.getElementById("nuevo-colegio-alias").value.trim();
 
   if (!colegio || !periodoVenta || !promotor || !cuenta || !password) {
-    alert("Completa todos los datos.");
+    alert("Completa todos los datos obligatorios.");
     return;
   }
 
@@ -772,7 +789,8 @@ async function guardarColegio() {
         periodoVenta,
         promotor,
         cuenta,
-        password
+        password,
+        aliasQR
       })
     });
 
@@ -783,7 +801,11 @@ async function guardarColegio() {
       return;
     }
 
-    alert(colegioEditando ? "Colegio actualizado correctamente." : "Colegio guardado correctamente.");
+    alert(
+      colegioEditando
+        ? "Colegio actualizado correctamente."
+        : "Colegio guardado correctamente."
+    );
 
     cerrarNuevoColegio();
     cargarColegios();
@@ -1301,7 +1323,9 @@ function procesarQRCaja() {
   const pedido = partes[0].trim();
   const alumno = partes[1].trim();
   const grado = partes[2].trim();
-  const colegio = partes[3].trim();
+
+  const colegioOriginal = partes[3].trim();
+  const colegio = obtenerColegioPorAlias(colegioOriginal);
 
   input.value = pedido;
 
@@ -1467,7 +1491,9 @@ function agregarQRPaqueteria() {
   const pedido = partes[0].trim();
   const alumno = partes[1].trim();
   const grado = partes[2].trim();
-  const colegio = partes[3].trim();
+
+  const colegioOriginal = partes[3].trim();
+  const colegio = obtenerColegioPorAlias(colegioOriginal);
 
   const yaExiste = pedidosPaqueteria.some(item =>
     String(item.pedido) === String(pedido)
@@ -2175,6 +2201,26 @@ function descargarFaltantesExcel() {
   document.body.removeChild(enlace);
 
   URL.revokeObjectURL(url);
+}
+
+function obtenerColegioPorAlias(nombreQR) {
+  const nombreNormalizado = normalizarTexto(nombreQR);
+
+  for (const colegio of colegiosGlobal) {
+
+    const aliases = String(
+      colegio.aliasQR || ""
+    )
+    .split("|")
+    .map(a => normalizarTexto(a.trim()))
+    .filter(Boolean);
+
+    if (aliases.includes(nombreNormalizado)) {
+      return colegio.colegio;
+    }
+  }
+
+  return nombreQR;
 }
 
     function normalizarTexto(texto) {
