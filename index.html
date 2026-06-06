@@ -1969,22 +1969,38 @@ function toggleInventarioAlertas() {
 }
 
     function renderInventario(filas) {
-  const lista = document.getElementById("lista-inventario");
-  const kpis = document.getElementById("kpis-inventario");
+    const lista = document.getElementById("lista-inventario");
+    const kpis = document.getElementById("kpis-inventario");
 
-  lista.innerHTML = "";
+    lista.innerHTML = "";
 
-  let ok = 0;
-  let low = 0;
-  let zero = 0;
+    let ok = 0;
+    let low = 0;
+    let zero = 0;
+
+    let totalMax = 0;
+    let totalRecibido = 0;
 
   filas.forEach(fila => {
     const stock = Number(fila[2]) || 0;
+    const max = Number(fila[3]) || 0;
+    const surtidos = Number(fila[5]) || 0;
 
-    if (stock <= 0) zero++;
-    else if (stock <= 5) low++;
-    else ok++;
-  });
+  if (stock <= 0) zero++;
+  else if (stock <= 5) low++;
+  else ok++;
+
+  totalMax += max;
+  totalRecibido += stock + surtidos;
+});
+
+const porcentajeRecibido =
+  totalMax > 0
+    ? Math.min(
+        Math.round((totalRecibido / totalMax) * 100),
+        100
+      )
+    : 0;
 
   kpis.innerHTML = `
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -2001,6 +2017,11 @@ function toggleInventarioAlertas() {
       <div class="card" style="flex:1; min-width:120px;">
         <h3 style="color:red;">${zero}</h3>
         <p>Sin stock</p>
+      </div>
+
+      <div class="card" style="flex:1; min-width:120px;">
+       <h3 style="color:#2b6dd9;">${porcentajeRecibido}%</h3>
+       <p>Mercancía recibida</p>
       </div>
     </div>
   `;
