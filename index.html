@@ -223,7 +223,7 @@
 
   <input
     id="scan-isbn"
-    placeholder="Escanea ISBN del libro"
+    placeholder="Escanea ISBN o Código Gonvill"
     onkeydown="leerISBN(event)"
   >
 
@@ -246,7 +246,7 @@
    
     <input
      id="scan-isbn-producto"
-     placeholder="Escanea ISBN del producto"
+     placeholder="Escanea ISBN o Código Gonvill"
      onkeydown="leerISBNProducto(event)"
     >
 
@@ -265,7 +265,7 @@
 
     <input
      id="scan-isbn-movimiento"
-     placeholder="Escanea ISBN del producto"
+     placeholder="Escanea ISBN o Código Gonvill"
      onkeydown="leerISBNMovimiento(event)"
    >
 
@@ -930,24 +930,24 @@ function leerISBN(event) {
 }
 
 async function buscarISBN() {
-  const isbn = document
+  const codigo = document
     .getElementById("scan-isbn")
     .value
     .trim();
 
   const resultado = document.getElementById("resultado-isbn");
 
-  if (!isbn) return;
+  if (!codigo) return;
 
   try {
-    resultado.innerHTML = "<p>Buscando libro...</p>";
+    resultado.innerHTML = "<p>Buscando artículo...</p>";
 
-    const libro = await obtenerLibroPorISBN(isbn);
+    const libro = await obtenerLibroPorISBN(codigo);
 
     if (!libro) {
       resultado.innerHTML = `
         <p style="color:red;">
-          Libro no encontrado
+          Artículo no encontrado
         </p>
       `;
       return;
@@ -971,9 +971,10 @@ async function buscarISBN() {
         padding:10px;
         margin-top:10px;
       ">
-        <strong>Libro agregado:</strong><br>
+        <strong>Artículo agregado:</strong><br>
         ${libro.titulo}<br>
-        ISBN: ${libro.isbn}
+        Código Gonvill: ${libro.codigo_gonvill || "N/A"}<br>
+        ISBN: ${libro.isbn || "N/A"}
       </div>
     `;
 
@@ -985,22 +986,39 @@ async function buscarISBN() {
 
     resultado.innerHTML = `
       <p style="color:red;">
-        Error al buscar ISBN
+        Error al buscar artículo
       </p>
     `;
   }
 }
 
-async function obtenerLibroPorISBN(isbn) {
-  if (cacheISBN[isbn]) {
-    return cacheISBN[isbn];
+async function obtenerLibroPorISBN(codigo) {
+  const codigoLimpio = String(codigo || "").trim();
+
+  if (!codigoLimpio) return null;
+
+  const claveCache = codigoLimpio;
+
+  if (cacheISBN[claveCache]) {
+    return cacheISBN[claveCache];
   }
 
-  const respuesta = await fetch(`${SCRIPT_URL}?isbn=${isbn}`);
+  const respuesta = await fetch(
+    `${SCRIPT_URL}?isbn=${encodeURIComponent(codigoLimpio)}`
+  );
+
   const libro = await respuesta.json();
 
   if (libro) {
-    cacheISBN[isbn] = libro;
+    cacheISBN[claveCache] = libro;
+
+    if (libro.codigo_gonvill) {
+      cacheISBN[String(libro.codigo_gonvill).trim()] = libro;
+    }
+
+    if (libro.isbn) {
+      cacheISBN[String(libro.isbn).trim()] = libro;
+    }
   }
 
   return libro;
@@ -1031,20 +1049,20 @@ function leerISBNMovimiento(event) {
 }
 
 async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
-  const isbn = document.getElementById(inputISBNId).value.trim();
+  const codigo = document.getElementById(inputISBNId).value.trim();
   const resultado = document.getElementById(resultadoId);
 
-  if (!isbn) return;
+  if (!codigo) return;
 
   try {
-    resultado.innerHTML = "<p>Buscando libro...</p>";
+    resultado.innerHTML = "<p>Buscando artículo...</p>";
 
-    const libro = await obtenerLibroPorISBN(isbn);
+    const libro = await obtenerLibroPorISBN(codigo);
 
     if (!libro) {
       resultado.innerHTML = `
         <p style="color:red;">
-          Libro no encontrado
+          Artículo no encontrado
         </p>
       `;
       return;
@@ -1060,9 +1078,10 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
         padding:10px;
         margin-top:10px;
       ">
-        <strong>Libro detectado:</strong><br>
+        <strong>Artículo detectado:</strong><br>
         ${libro.titulo}<br>
-        ISBN: ${libro.isbn}
+        Código Gonvill: ${libro.codigo_gonvill || "N/A"}<br>
+        ISBN: ${libro.isbn || "N/A"}
       </div>
     `;
 
@@ -1074,7 +1093,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
 
     resultado.innerHTML = `
       <p style="color:red;">
-        Error al buscar ISBN
+        Error al buscar artículo
       </p>
     `;
   }
@@ -1969,38 +1988,38 @@ function toggleInventarioAlertas() {
 }
 
     function renderInventario(filas) {
-    const lista = document.getElementById("lista-inventario");
-    const kpis = document.getElementById("kpis-inventario");
+  const lista = document.getElementById("lista-inventario");
+  const kpis = document.getElementById("kpis-inventario");
 
-    lista.innerHTML = "";
+  lista.innerHTML = "";
 
-    let ok = 0;
-    let low = 0;
-    let zero = 0;
+  let ok = 0;
+  let low = 0;
+  let zero = 0;
 
-    let totalMax = 0;
-    let totalRecibido = 0;
+  let totalMax = 0;
+  let totalRecibido = 0;
 
   filas.forEach(fila => {
     const stock = Number(fila[2]) || 0;
     const max = Number(fila[3]) || 0;
     const surtidos = Number(fila[5]) || 0;
 
-  if (stock <= 0) zero++;
-  else if (stock <= 5) low++;
-  else ok++;
+    if (stock <= 0) zero++;
+    else if (stock <= 5) low++;
+    else ok++;
 
-  totalMax += max;
-  totalRecibido += stock + surtidos;
-});
+    totalMax += max;
+    totalRecibido += stock + surtidos;
+  });
 
-const porcentajeRecibido =
-  totalMax > 0
-    ? Math.min(
-        Math.round((totalRecibido / totalMax) * 100),
-        100
-      )
-    : 0;
+  const porcentajeRecibido =
+    totalMax > 0
+      ? Math.min(
+          Math.round((totalRecibido / totalMax) * 100),
+          100
+        )
+      : 0;
 
   kpis.innerHTML = `
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -2020,8 +2039,8 @@ const porcentajeRecibido =
       </div>
 
       <div class="card" style="flex:1; min-width:120px;">
-       <h3 style="color:#2b6dd9;">${porcentajeRecibido}%</h3>
-       <p>Mercancía recibida</p>
+        <h3 style="color:#2b6dd9;">${porcentajeRecibido}%</h3>
+        <p>Mercancía recibida</p>
       </div>
     </div>
   `;
@@ -2040,6 +2059,7 @@ const porcentajeRecibido =
     const max = Number(fila[3]) || 20;
     const backorder = Number(fila[4]) || 0;
     const surtidos = Number(fila[5]) || 0;
+    const codigoGonvill = fila[6] || "Sin código";
 
     let clase = "stock-ok";
     let estado = "OK";
@@ -2067,7 +2087,10 @@ const porcentajeRecibido =
         background:white;
       ">
         <strong>${nombre}</strong><br>
-        <span style="color:#666">${colegio}</span>
+        <span style="color:#666">${colegio}</span><br>
+        <span style="color:#444;">
+          Código Gonvill: <strong>${codigoGonvill}</strong>
+        </span>
 
         <div class="${clase}">
           ${estado} — Stock: ${stock}/${max}
