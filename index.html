@@ -147,7 +147,7 @@
 
   <div class="card">
   <h2>Seleccionar colegio</h2>
-  
+ 
   <input
   id="buscar-colegio"
   placeholder="Buscar colegio"
@@ -433,9 +433,10 @@
 
   <div id="lista-pedidos"></div>
 </div>
-	
+
 
   <script>
+    const API_CATALOGO_URL = "http://192.168.3.62:3000";
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
     let pedidosGlobal = [];
     let pedidosFiltrados = [];
@@ -690,7 +691,7 @@ function cerrarNuevoColegio() {
 
   colegioEditando = "";
 }
-	
+
   function filtrarPedidos() {
   const lista = document.getElementById("lista-pedidos");
 
@@ -989,40 +990,6 @@ async function buscarISBN() {
         Error al buscar artículo
       </p>
     `;
-  }
-}
-
-async function obtenerLibroPorISBN(codigo) {
-  const codigoLimpio = String(codigo || "").trim();
-
-  if (!codigoLimpio) return null;
-
-  const claveCache = codigoLimpio;
-
-  if (cacheISBN[claveCache]) {
-    return cacheISBN[claveCache];
-  }
-
-  const respuesta = await fetch(
-    `${SCRIPT_URL}?isbn=${encodeURIComponent(codigoLimpio)}`
-  );
-
-  const libro = await respuesta.json();
-
-  if (libro) {
-    cacheISBN[claveCache] = libro;
-
-    if (libro.codigo_gonvill) {
-      cacheISBN[String(libro.codigo_gonvill).trim()] = libro;
-    }
-
-    if (libro.isbn) {
-      cacheISBN[String(libro.isbn).trim()] = libro;
-    }
-  }
-
-  return libro;
-}
 
 function leerISBNProducto(event) {
   if (event.key !== "Enter") return;
@@ -1823,7 +1790,7 @@ async function buscarUbicacionPedido() {
         <h3>Ubicación encontrada</h3>
         <p><strong>Pedido:</strong> ${pedido}</p>
         <p><strong>Alumno:</strong> ${alumno}</p>
-        <p><strong>Ubicación:</strong> 
+        <p><strong>Ubicación:</strong>
           <span style="font-size:20px; font-weight:bold; color:#2a8a56;">
             ${ubicacion}
           </span>
