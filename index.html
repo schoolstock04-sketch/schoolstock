@@ -958,8 +958,7 @@ async function buscarISBN() {
     const productosActuales = inputProductos.value.trim();
 
     if (productosActuales) {
-      inputProductos.value =
-        productosActuales + "/" + libro.titulo;
+      inputProductos.value = productosActuales + "/" + libro.titulo;
     } else {
       inputProductos.value = libro.titulo;
     }
@@ -990,6 +989,38 @@ async function buscarISBN() {
         Error al buscar artículo
       </p>
     `;
+  }
+}
+
+async function obtenerLibroPorISBN(codigo) {
+  const codigoLimpio = String(codigo || "").trim();
+
+  if (!codigoLimpio) return null;
+
+  if (cacheISBN[codigoLimpio]) {
+    return cacheISBN[codigoLimpio];
+  }
+
+  const respuesta = await fetch(
+    `${API_CATALOGO_URL}/api/articulo/${encodeURIComponent(codigoLimpio)}`
+  );
+
+  const libro = await respuesta.json();
+
+  if (libro) {
+    cacheISBN[codigoLimpio] = libro;
+
+    if (libro.codigo_gonvill) {
+      cacheISBN[String(libro.codigo_gonvill).trim()] = libro;
+    }
+
+    if (libro.isbn) {
+      cacheISBN[String(libro.isbn).trim()] = libro;
+    }
+  }
+
+  return libro;
+}
 
 function leerISBNProducto(event) {
   if (event.key !== "Enter") return;
