@@ -2415,11 +2415,22 @@ function obtenerColegioPorAlias(nombreQR) {
           return;
         }
 
-        alert("Entrada registrada. Nuevo stock: " + resultado.nuevoStock);
+       alert("Entrada registrada. Nuevo stock: " + resultado.nuevoStock);
 
-        cerrarMovimientoInventario();
-        cargarInventario();
-        cargarAlertasFaltantes();
+// Limpiar solo campos de captura
+document.getElementById("scan-isbn-movimiento").value = "";
+document.getElementById("resultado-isbn-movimiento").innerHTML = "";
+
+document.getElementById("mov-producto").value = "";
+document.getElementById("mov-cantidad").value = "";
+document.getElementById("mov-nota").value = "";
+
+// Mantener colegio seleccionado
+
+document.getElementById("scan-isbn-movimiento").focus();
+
+cargarInventario();
+cargarAlertasFaltantes();
 
       } catch (error) {
         alert("No se pudo guardar el movimiento.");
