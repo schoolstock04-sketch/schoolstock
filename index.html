@@ -888,39 +888,138 @@ function leerQRPedido(event) {
 
   inputQR.value = "";
   document.getElementById("productos").focus();
-}    async function marcarCompleto(id) {
-      try {
-        const respuesta = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            accion: "completarConInventario",
-            id: id
-          })
-        });
+}    
 
-        const resultado = await respuesta.json();
+     async function marcarCompleto(id) {
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "completarConInventario",
+        id: id
+      })
+    });
 
-        if (!resultado.ok) {
-          const faltantes = resultado.faltantes || [];
+    const resultado = await respuesta.json();
 
-          alert(
-            "Pedido incompleto. Faltantes: " +
-            faltantes.join(", ")
-          );
+    if (!resultado.ok) {
+      const faltantes = resultado.faltantes || [];
 
-        } else {
-          alert("Pedido completo. Inventario descontado correctamente.");
-        }
-
-        cargarPedidos();
-        cargarInventario();
-        cargarAlertasFaltantes();
-
-      } catch (error) {
-        alert("No se pudo completar el pedido.");
-        console.error(error);
+      if (
+        resultado.requiereConfirmarUbicacion &&
+        resultado.ubicacionPropuesta &&
+        resultado.ubicacionPropuesta.ok
+      ) {
+        mostrarConfirmacionUbicacion(resultado);
+        return;
       }
+
+      alert(
+        "Pedido incompleto. Faltantes: " +
+        faltantes.join(", ")
+      );
+
+    } else {
+      alert("Pedido completo. Inventario descontado correctamente.");
     }
+
+    cargarPedidos();
+    cargarInventario();
+    cargarAlertasFaltantes();
+
+  } catch (error) {
+    alert("No se pudo completar el pedido.");
+    console.error(error);
+  }
+}
+
+function mostrarConfirmacionUbicacion(resultado) {
+  const ubicacion = resultado.ubicacionPropuesta.ubicacion;
+
+  const confirmar = confirm(
+    "Pedido incompleto.\n\n" +
+    "Faltantes:\n" +
+    resultado.faltantes.join(", ") +
+    "\n\nUbicación sugerida:\n" +
+    ubicacion +
+    "\n\n¿Cabe este pedido en esa ubicación?"
+  );
+
+  if (confirmar) {
+    confirmarUbicacionPedidoHTML(
+      resultado.pedidoId,
+      resultado.alumno,
+      resultado.colegio,
+      ubicacion
+    );
+  } else {
+    rechazarUbicacionHTML(
+      resultado.pedidoId,
+      resultado.alumno,
+      resultado.colegio,
+      ubicacion
+    );
+  }
+}
+
+async function confirmarUbicacionPedidoHTML(pedidoId, alumno, colegio, ubicacion) {
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "confirmarUbicacionPedido",
+        pedidoId,
+        alumno,
+        colegio,
+        ubicacion
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Ubicación asignada: " + resultado.ubicacion);
+
+    cargarPedidos();
+    cargarInventario();
+    cargarAlertasFaltantes();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo confirmar la ubicación.");
+  }
+}
+
+async function rechazarUbicacionHTML(pedidoId, alumno, colegio, ubicacion) {
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "rechazarUbicacion",
+        ubicacion
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Ubicación marcada como llena. Vuelve a intentar para buscar otra ubicación.");
+
+    cargarPedidos();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo rechazar la ubicación.");
+  }
+}
 
 function leerISBN(event) {
   if (event.key !== "Enter") return;
@@ -1787,12 +1886,12 @@ async function buscarUbicacionPedido() {
   try {
     resultado.innerHTML = "<p>Buscando ubicación...</p>";
 
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Ubicaciones`);
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=UbicacionesPedidos`);
     const datos = await respuesta.json();
     const filas = datos.slice(1);
 
     const encontrado = filas.find(fila =>
-      String(fila[2]).trim() === pedidoBuscado
+      String(fila[1]).trim() === pedidoBuscado
     );
 
     if (!encontrado) {
@@ -1805,9 +1904,9 @@ async function buscarUbicacionPedido() {
     }
 
     const ubicacion = encontrado[0];
-    const estado = encontrado[1];
-    const pedido = encontrado[2];
-    const alumno = encontrado[3];
+    const pedido = encontrado[1];
+    const alumno = encontrado[2];
+    const colegio = encontrado[3];
     const fecha = encontrado[4];
 
     resultado.innerHTML = `
@@ -1821,12 +1920,12 @@ async function buscarUbicacionPedido() {
         <h3>Ubicación encontrada</h3>
         <p><strong>Pedido:</strong> ${pedido}</p>
         <p><strong>Alumno:</strong> ${alumno}</p>
+        <p><strong>Colegio:</strong> ${colegio}</p>
         <p><strong>Ubicación:</strong>
           <span style="font-size:20px; font-weight:bold; color:#2a8a56;">
             ${ubicacion}
           </span>
         </p>
-        <p><strong>Estado:</strong> ${estado}</p>
         <p><strong>Fecha:</strong> ${fecha || ""}</p>
       </div>
     `;
