@@ -1267,6 +1267,12 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   const backorder = max - stock;
   const surtidos = 0;
 
+const codigoGonvill =
+  libroProductoSeleccionado?.codigo_gonvill || "";
+
+const isbn =
+  libroProductoSeleccionado?.isbn || "";
+
   try {
     const respuesta = await fetch(SCRIPT_URL, {
       method: "POST",
@@ -1279,7 +1285,9 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
           stock,
           max,
           backorder,
-          surtidos
+          surtidos,
+          codigoGonvill,
+          isbn
         ]
       })
     });
