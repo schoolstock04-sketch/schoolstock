@@ -1167,6 +1167,9 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     }
 
     document.getElementById(campoDestinoId).value = libro.titulo;
+    if (campoDestinoId === "prod-nombre") {
+       libroProductoSeleccionado = libro;
+    }
 
     resultado.innerHTML = `
       <div style="
