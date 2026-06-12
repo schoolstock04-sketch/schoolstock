@@ -839,7 +839,16 @@ function cerrarNuevoColegio() {
         return;
       }
 
-      const fila = [id, alumno, grado, colegio, productos, "", "pendiente"];
+      const fila = [
+       id,
+       alumno,
+       grado,
+       colegio,
+       productos,
+        "",
+       "pendiente",
+       codigosGonvillPedido.join("/")
+    ];
 
       try {
         const respuesta = await fetch(SCRIPT_URL, {
@@ -865,6 +874,10 @@ function cerrarNuevoColegio() {
         document.getElementById("grado").value = "";
         document.getElementById("colegio").value = "";
         document.getElementById("productos").value = "";
+
+        codigosGonvillPedido = [];
+        document.getElementById("archivo-txt-pedido").value = "";
+        document.getElementById("resultado-txt-pedido").innerHTML = "";
 
         cargarPedidos();
         cargarAlertasFaltantes();
