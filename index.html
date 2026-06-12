@@ -454,8 +454,8 @@
     let faltantesGlobal = [];
     let pedidosPaqueteria = [];
     const cacheISBN = {};
-    let codigosGonvillPedido = [];
     let libroProductoSeleccionado = null;
+    let codigosGonvillPedido = [];
 
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
@@ -1130,6 +1130,80 @@ async function obtenerLibroPorISBN(codigo) {
   return libro;
 }
 
+async function leerArchivoPedidoTXT(event) {
+  const archivo = event.target.files[0];
+  const resultado = document.getElementById("resultado-txt-pedido");
+
+  if (!archivo) return;
+
+  resultado.innerHTML = "<p>Leyendo archivo TXT...</p>";
+
+  try {
+    const texto = await archivo.text();
+
+    const lineas = texto
+      .split(/\r?\n/)
+      .map(linea => linea.trim())
+      .filter(Boolean);
+
+    const productos = [];
+    const codigos = [];
+    const noEncontrados = [];
+
+    for (const linea of lineas) {
+      const partes = linea.split("+");
+
+      const codigo = String(partes[0] || "").trim().padStart(8, "0");
+      const cantidad = Number(partes[1]) || 1;
+
+      if (!codigo) continue;
+
+      const libro = await obtenerLibroPorISBN(codigo);
+
+      if (!libro || !libro.titulo) {
+        noEncontrados.push(codigo);
+        continue;
+      }
+
+      for (let i = 0; i < cantidad; i++) {
+        productos.push(libro.titulo);
+        codigos.push(String(libro.codigo_gonvill || codigo).trim().padStart(8, "0"));
+      }
+    }
+
+    document.getElementById("productos").value = productos.join("/");
+    codigosGonvillPedido = codigos;
+
+    resultado.innerHTML = `
+      <div style="
+        background:${noEncontrados.length ? "#fff1ee" : "#effaf3"};
+        border:1px solid ${noEncontrados.length ? "#d94f2b" : "#2a8a56"};
+        border-radius:10px;
+        padding:10px;
+        margin-top:10px;
+      ">
+        <strong>TXT procesado</strong><br>
+        Libros cargados: ${productos.length}<br>
+        Códigos guardados: ${codigos.length}<br>
+        ${
+          noEncontrados.length
+            ? `<br><strong style="color:red;">No encontrados:</strong><br>${noEncontrados.join(", ")}`
+            : ""
+        }
+      </div>
+    `;
+
+  } catch (error) {
+    console.error(error);
+
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al leer el archivo TXT.
+      </p>
+    `;
+  }
+}
+    
 function leerISBNProducto(event) {
   if (event.key !== "Enter") return;
 
