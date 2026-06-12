@@ -1139,11 +1139,104 @@ function leerISBNMovimiento(event) {
 
   event.preventDefault();
 
-  buscarISBNParaCampo(
-    "scan-isbn-movimiento",
-    "mov-producto",
-    "resultado-isbn-movimiento"
-  );
+  buscarProductoInventarioPorCodigo();
+}
+
+    async function buscarProductoInventarioPorCodigo() {
+  const codigo = document
+    .getElementById("scan-isbn-movimiento")
+    .value
+    .trim();
+
+  const colegio = document
+    .getElementById("mov-colegio")
+    .value
+    .trim();
+
+  const resultado = document.getElementById("resultado-isbn-movimiento");
+
+  if (!codigo) return;
+
+  if (!colegio) {
+    alert("Selecciona primero el colegio.");
+    return;
+  }
+
+  try {
+    resultado.innerHTML = "<p>Buscando producto en inventario...</p>";
+
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
+
+    const codigoNormalizado = String(codigo).trim().padStart(8, "0");
+
+    const encontrado = filas.find(fila => {
+      const colegioInv = String(fila[1] || "").trim();
+
+      const codigoGonvill = String(fila[6] || "")
+        .replace("'", "")
+        .trim()
+        .padStart(8, "0");
+
+      const isbn = String(fila[7] || "").trim();
+
+      return (
+        normalizarTexto(colegioInv) === normalizarTexto(colegio) &&
+        (
+          codigoGonvill === codigoNormalizado ||
+          isbn === codigo
+        )
+      );
+    });
+
+    if (!encontrado) {
+      resultado.innerHTML = `
+        <p style="color:red;">
+          Este producto no existe en Inventario para ${colegio}.
+        </p>
+      `;
+
+      document.getElementById("mov-producto").value = "";
+      return;
+    }
+
+    const producto = encontrado[0];
+    const stock = encontrado[2] || 0;
+    const max = encontrado[3] || 0;
+    const codigoGonvill = encontrado[6] || "";
+    const isbn = encontrado[7] || "";
+
+    document.getElementById("mov-producto").value = producto;
+
+    resultado.innerHTML = `
+      <div style="
+        background:#fff;
+        border:1px solid #ddd;
+        border-radius:10px;
+        padding:10px;
+        margin-top:10px;
+      ">
+        <strong>Producto encontrado en inventario:</strong><br>
+        ${producto}<br>
+        Código Gonvill: ${codigoGonvill || "N/A"}<br>
+        ISBN: ${isbn || "N/A"}<br>
+        Stock actual: ${stock}/${max}
+      </div>
+    `;
+
+    document.getElementById("scan-isbn-movimiento").value = "";
+    document.getElementById("mov-cantidad").focus();
+
+  } catch (error) {
+    console.error(error);
+
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al buscar producto en inventario.
+      </p>
+    `;
+  }
 }
 
 async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
