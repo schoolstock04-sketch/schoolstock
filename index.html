@@ -226,11 +226,18 @@
     placeholder="Escanea ISBN o Código Gonvill"
     onkeydown="leerISBN(event)"
   >
-
+  
   <div id="resultado-isbn"></div>
 
   <input id="productos" placeholder="Productos separados por /">
+  <input
+  type="file"
+  id="archivo-txt-pedido"
+  accept=".txt"
+  onchange="leerArchivoPedidoTXT(event)"
+>
 
+<div id="resultado-txt-pedido"></div>
   <button onclick="guardarPedido()">Guardar pedido</button>
 </div>
 
@@ -447,6 +454,7 @@
     let faltantesGlobal = [];
     let pedidosPaqueteria = [];
     const cacheISBN = {};
+    let codigosGonvillPedido = [];
     let libroProductoSeleccionado = null;
 
     async function cargarPedidos() {
