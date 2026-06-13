@@ -2706,6 +2706,170 @@ function obtenerColegioPorAlias(nombreQR) {
   return nombreQR;
 }
 
+function abrirValidacionFisica(id) {
+  const pedido = pedidosGlobal.find(fila => String(fila[0]) === String(id));
+
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
+  }
+
+  const codigos = String(pedido[7] || "")
+    .split("/")
+    .map(c => c.trim())
+    .filter(Boolean);
+
+  if (codigos.length === 0) {
+    alert("Este pedido no tiene códigos Gonvill guardados.");
+    return;
+  }
+
+  pedidoValidando = pedido;
+  codigosEsperadosValidacion = codigos;
+  codigosEscaneadosValidacion = [];
+
+  document.getElementById("modal-validacion").style.display = "block";
+  document.getElementById("scan-validacion").value = "";
+  document.getElementById("resultado-validacion").innerHTML = "";
+
+  renderValidacionFisica();
+
+  document.getElementById("scan-validacion").focus();
+}
+
+    function leerValidacionFisica(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
+  const input = document.getElementById("scan-validacion");
+  const codigo = input.value.trim();
+
+  if (!codigo) return;
+
+  validarCodigoFisico(codigo);
+
+  input.value = "";
+  input.focus();
+}
+
+    async function validarCodigoFisico(codigo) {
+  try {
+    const libro = await obtenerLibroPorISBN(codigo);
+
+    if (!libro || !libro.codigo_gonvill) {
+      document.getElementById("resultado-validacion").innerHTML = `
+        <p style="color:red;">
+          Código no encontrado: ${codigo}
+        </p>
+      `;
+      return;
+    }
+
+    const codigoGonvill = String(libro.codigo_gonvill).trim().padStart(8, "0");
+
+    codigosEscaneadosValidacion.push(codigoGonvill);
+
+    renderValidacionFisica();
+
+  } catch (error) {
+    console.error(error);
+    document.getElementById("resultado-validacion").innerHTML = `
+      <p style="color:red;">
+        Error al validar código.
+      </p>
+    `;
+  }
+}
+
+    function contarCodigos(lista) {
+  const mapa = {};
+
+  lista.forEach(codigo => {
+    mapa[codigo] = (mapa[codigo] || 0) + 1;
+  });
+
+  return mapa;
+}
+
+    function renderValidacionFisica() {
+  const info = document.getElementById("info-validacion");
+  const resultado = document.getElementById("resultado-validacion");
+
+  const esperados = contarCodigos(codigosEsperadosValidacion);
+  const escaneados = contarCodigos(codigosEscaneadosValidacion);
+
+  const faltantes = [];
+  const sobrantes = [];
+
+  Object.keys(esperados).forEach(codigo => {
+    const falta = esperados[codigo] - (escaneados[codigo] || 0);
+
+    if (falta > 0) {
+      faltantes.push(`${codigo} x${falta}`);
+    }
+  });
+
+  Object.keys(escaneados).forEach(codigo => {
+    const sobra = escaneados[codigo] - (esperados[codigo] || 0);
+
+    if (sobra > 0) {
+      sobrantes.push(`${codigo} x${sobra}`);
+    }
+  });
+
+  const completo =
+    faltantes.length === 0 &&
+    sobrantes.length === 0 &&
+    codigosEscaneadosValidacion.length > 0;
+
+  info.innerHTML = `
+    <p><strong>Pedido:</strong> ${pedidoValidando[0]}</p>
+    <p><strong>Alumno:</strong> ${pedidoValidando[1]}</p>
+    <p><strong>Colegio:</strong> ${pedidoValidando[3]}</p>
+
+    <p>
+      Esperados: <strong>${codigosEsperadosValidacion.length}</strong><br>
+      Escaneados: <strong>${codigosEscaneadosValidacion.length}</strong>
+    </p>
+  `;
+
+  resultado.innerHTML = `
+    ${
+      faltantes.length
+        ? `<p style="color:#d48b00;"><strong>Faltan:</strong><br>${faltantes.join("<br>")}</p>`
+        : `<p style="color:green;"><strong>No faltan códigos.</strong></p>`
+    }
+
+    ${
+      sobrantes.length
+        ? `<p style="color:red;"><strong>Sobran/no pertenecen:</strong><br>${sobrantes.join("<br>")}</p>`
+        : ""
+    }
+
+    ${
+      completo
+        ? `
+          <button onclick="marcarCompleto('${pedidoValidando[0]}')">
+            ✓ Validación correcta, marcar completo
+          </button>
+        `
+        : ""
+    }
+  `;
+}
+
+    function cerrarValidacionFisica() {
+  document.getElementById("modal-validacion").style.display = "none";
+
+  pedidoValidando = null;
+  codigosEsperadosValidacion = [];
+  codigosEscaneadosValidacion = [];
+
+  document.getElementById("scan-validacion").value = "";
+  document.getElementById("resultado-validacion").innerHTML = "";
+}
+    
     function normalizarTexto(texto) {
       return String(texto)
         .toLowerCase()
