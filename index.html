@@ -456,6 +456,9 @@
     const cacheISBN = {};
     let libroProductoSeleccionado = null;
     let codigosGonvillPedido = [];
+    let pedidoValidando = null;
+    let codigosEsperadosValidacion = [];
+    let codigosEscaneadosValidacion = [];
 
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
