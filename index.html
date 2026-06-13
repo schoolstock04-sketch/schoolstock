@@ -222,6 +222,14 @@
   <select id="colegio"></select>
 
   <input
+  id="surtidor-numero"
+  placeholder="Número de surtidor"
+  onkeydown="leerSurtidor(event)"
+  >
+
+  <div id="surtidor-detectado"></div>
+    
+  <input
     id="scan-isbn"
     placeholder="Escanea ISBN o Código Gonvill"
     onkeydown="leerISBN(event)"
@@ -476,6 +484,8 @@
     let pedidoValidando = null;
     let codigosEsperadosValidacion = [];
     let codigosEscaneadosValidacion = [];
+    let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
+    let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
 
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
@@ -719,6 +729,49 @@ function cerrarNuevoColegio() {
   document.getElementById("nuevo-colegio-alias").value = "";
 
   colegioEditando = "";
+}
+
+    function leerSurtidor(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+  buscarSurtidor();
+}
+
+async function buscarSurtidor() {
+  const numero = document.getElementById("surtidor-numero").value.trim();
+  const contenedor = document.getElementById("surtidor-detectado");
+
+  if (!numero) return;
+
+  const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
+  const datos = await respuesta.json();
+  const filas = datos.slice(1);
+
+  const encontrado = filas.find(fila =>
+    String(fila[0]).trim() === numero
+  );
+
+  if (!encontrado) {
+    contenedor.innerHTML = `<p style="color:red;">Surtidor no encontrado.</p>`;
+    surtidorActualNumero = "";
+    surtidorActualNombre = "";
+    localStorage.removeItem("surtidorNumero");
+    localStorage.removeItem("surtidorNombre");
+    return;
+  }
+
+  surtidorActualNumero = numero;
+  surtidorActualNombre = encontrado[1];
+
+  localStorage.setItem("surtidorNumero", surtidorActualNumero);
+  localStorage.setItem("surtidorNombre", surtidorActualNombre);
+
+  contenedor.innerHTML = `
+    <p style="color:green;">
+      Surtidor actual: <strong>${surtidorActualNombre}</strong>
+    </p>
+  `;
 }
 
   function filtrarPedidos() {
