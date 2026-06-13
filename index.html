@@ -948,9 +948,10 @@ function leerQRPedido(event) {
   const input = document.getElementById("buscar-pedido");
   const texto = input.value.trim();
 
-  if (texto.includes("+")) {
-    const partes = texto.split("+");
-    input.value = partes[0].trim();
+  const match = texto.match(/^\d+/);
+
+  if (match) {
+    input.value = match[0];
   }
 
   filtrarPedidos();
