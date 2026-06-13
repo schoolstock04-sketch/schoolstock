@@ -449,10 +449,10 @@
   <h2>Pedidos registrados</h2>
 
   <input
-    id="buscar-pedido"
-    placeholder="Buscar pedido por código"
-    oninput="filtrarPedidos()"
-  >
+  id="buscar-pedido"
+  placeholder="Escanea QR o escribe número de pedido"
+  oninput="normalizarBusquedaPedidoQR()"
+ >
 
   <button onclick="cargarPedidos()">Actualizar</button>
 
@@ -942,6 +942,18 @@ function leerQRPedido(event) {
   cargarTXTDesdeServidor(pedidoId);
 
   document.getElementById("productos").focus();
+}
+
+    function normalizarBusquedaPedidoQR() {
+  const input = document.getElementById("buscar-pedido");
+  const texto = input.value.trim();
+
+  if (texto.includes("+")) {
+    const partes = texto.split("+");
+    input.value = partes[0].trim();
+  }
+
+  filtrarPedidos();
 }
     
      async function marcarCompleto(id) {
