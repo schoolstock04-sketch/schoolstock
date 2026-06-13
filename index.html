@@ -1216,6 +1216,101 @@ async function leerArchivoPedidoTXT(event) {
     `;
   }
 }
+
+    async function cargarTXTDesdeServidor(pedidoId) {
+  const resultado = document.getElementById("resultado-txt-pedido");
+
+  if (!pedidoId) return;
+
+  try {
+    resultado.innerHTML = "<p>Buscando TXT del pedido...</p>";
+
+    const respuesta = await fetch(
+      `${API_CATALOGO_URL}/api/pedido-txt/${encodeURIComponent(pedidoId)}`
+    );
+
+    const data = await respuesta.json();
+
+    if (!data.ok) {
+      resultado.innerHTML = `
+        <p style="color:orange;">
+          No se encontró TXT para el pedido ${pedidoId}.
+        </p>
+      `;
+      return;
+    }
+
+    await procesarTextoPedidoTXT(data.contenido);
+
+  } catch (error) {
+    console.error(error);
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al cargar TXT desde servidor.
+      </p>
+    `;
+  }
+}
+
+    async function procesarTextoPedidoTXT(texto) {
+  const resultado = document.getElementById("resultado-txt-pedido");
+
+  const lineas = texto
+    .split(/\r?\n/)
+    .map(linea => linea.trim())
+    .filter(Boolean);
+
+  const productos = [];
+  const codigos = [];
+  const noEncontrados = [];
+
+  for (const linea of lineas) {
+    const partes = linea.split("+");
+
+    const codigo = String(partes[0] || "").trim().padStart(8, "0");
+    const cantidad = Number(partes[1]) || 1;
+
+    if (!codigo) continue;
+
+    const libro = await obtenerLibroPorISBN(codigo);
+
+    if (!libro || !libro.titulo) {
+      noEncontrados.push(codigo);
+      continue;
+    }
+
+    for (let i = 0; i < cantidad; i++) {
+      productos.push(libro.titulo);
+      codigos.push(
+        String(libro.codigo_gonvill || codigo)
+          .trim()
+          .padStart(8, "0")
+      );
+    }
+  }
+
+  document.getElementById("productos").value = productos.join("/");
+  codigosGonvillPedido = codigos;
+
+  resultado.innerHTML = `
+    <div style="
+      background:${noEncontrados.length ? "#fff1ee" : "#effaf3"};
+      border:1px solid ${noEncontrados.length ? "#d94f2b" : "#2a8a56"};
+      border-radius:10px;
+      padding:10px;
+      margin-top:10px;
+    ">
+      <strong>TXT cargado desde servidor</strong><br>
+      Libros cargados: ${productos.length}<br>
+      Códigos Gonvill: ${codigos.length}
+      ${
+        noEncontrados.length
+          ? `<br><br><strong style="color:red;">No encontrados:</strong><br>${noEncontrados.join(", ")}`
+          : ""
+      }
+    </div>
+  `;
+}
     
 function leerISBNProducto(event) {
   if (event.key !== "Enter") return;
