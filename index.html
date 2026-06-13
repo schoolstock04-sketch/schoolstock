@@ -287,6 +287,24 @@
     <button onclick="cerrarMovimientoInventario()">Cancelar</button>
   </div>
 
+  <div id="modal-validacion" class="card" style="display:none;">
+  <h2>Validación física de pedido</h2>
+
+  <div id="info-validacion"></div>
+
+  <input
+    id="scan-validacion"
+    placeholder="Escanea ISBN o Código Gonvill"
+    onkeydown="leerValidacionFisica(event)"
+  >
+
+  <div id="resultado-validacion"></div>
+
+  <button onclick="cerrarValidacionFisica()">
+    Cerrar
+  </button>
+</div>
+  
   <div id="modal-paqueteria">
     <h2>Registrar envío</h2>
 
