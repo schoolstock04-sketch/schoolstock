@@ -891,6 +891,8 @@ function cerrarNuevoColegio() {
 function leerQRPedido(event) {
   if (event.key !== "Enter") return;
 
+  event.preventDefault();
+
   const inputQR = document.getElementById("qr-pedido");
   const texto = inputQR.value.trim();
 
@@ -899,19 +901,24 @@ function leerQRPedido(event) {
   const partes = texto.split("+");
 
   if (partes.length < 4) {
-    alert("QR inválido. Formato esperado: pedido]alumno]grado]colegio");
+    alert("QR inválido. Formato esperado: pedido+alumno+grado+colegio");
     return;
   }
 
-  document.getElementById("id").value = partes[0].trim();
+  const pedidoId = partes[0].trim();
+
+  document.getElementById("id").value = pedidoId;
   document.getElementById("alumno").value = partes[1].trim();
   document.getElementById("grado").value = partes[2].trim();
   document.getElementById("colegio").value = partes[3].trim();
 
   inputQR.value = "";
-  document.getElementById("productos").focus();
-}    
 
+  cargarTXTDesdeServidor(pedidoId);
+
+  document.getElementById("productos").focus();
+}
+    
      async function marcarCompleto(id) {
   try {
     const respuesta = await fetch(SCRIPT_URL, {
