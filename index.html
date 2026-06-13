@@ -943,14 +943,20 @@ function leerQRPedido(event) {
   document.getElementById("productos").focus();
 }
 
-    function normalizarBusquedaPedidoQR() {
+    function leerBusquedaPedidoQR(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
   const input = document.getElementById("buscar-pedido");
   const texto = input.value.trim();
 
-  const match = texto.match(/^\d+/);
+  if (!texto) return;
 
-  if (match) {
-    input.value = match[0];
+  const partes = texto.split("+");
+
+  if (partes.length > 0) {
+    input.value = partes[0].trim();
   }
 
   filtrarPedidos();
