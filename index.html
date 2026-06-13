@@ -741,6 +741,18 @@ function cerrarNuevoColegio() {
   pedidosFiltrados = pedidosGlobal.filter(fila => {
     const idPedido = String(fila[0]);
     const colegioPedido = String(fila[3] || "");
+    const status = String(fila[6] || "pendiente").toLowerCase();
+
+    const estadosOcultos = [
+      "completo",
+      "caja",
+      "en caja",
+      "paqueteria",
+      "paquetería",
+      "enviado"
+    ];
+
+    const sigueActivo = !estadosOcultos.includes(status);
 
     const coincideTexto =
       !texto || idPedido.includes(texto);
@@ -749,7 +761,7 @@ function cerrarNuevoColegio() {
       normalizarTexto(colegioPedido) ===
       normalizarTexto(colegioActivo);
 
-    return coincideTexto && coincideColegio;
+    return coincideTexto && coincideColegio && sigueActivo;
   });
 
   pedidosFiltrados.forEach(fila => {
@@ -795,11 +807,10 @@ function cerrarNuevoColegio() {
 
   if (pedidosFiltrados.length === 0) {
     lista.innerHTML = `
-      <p>No se encontraron pedidos con ese filtro.</p>
+      <p>No se encontraron pedidos activos con ese filtro.</p>
     `;
   }
 }
-
   async function guardarColegio() {
   const colegio = document.getElementById("nuevo-colegio-nombre").value.trim();
   const periodoVenta = document.getElementById("nuevo-colegio-periodo").value.trim();
