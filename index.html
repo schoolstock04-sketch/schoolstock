@@ -1113,7 +1113,9 @@ function leerQRPedido(event) {
       method: "POST",
       body: JSON.stringify({
         accion: "completarConInventario",
-        id: id
+        id: id,
+        checadorNumero: checadorActualNumero,
+        checadorNombre: checadorActualNombre
       })
     });
 
@@ -1149,7 +1151,7 @@ function leerQRPedido(event) {
     console.error(error);
   }
 }
-
+    
 function mostrarConfirmacionUbicacion(resultado) {
   const ubicacion = resultado.ubicacionPropuesta.ubicacion;
 
