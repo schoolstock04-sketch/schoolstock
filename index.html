@@ -784,6 +784,75 @@ async function buscarSurtidor() {
   `;
 }
 
+    function leerChecador(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+  buscarChecador();
+}
+
+    async function buscarChecador() {
+  const numero = document.getElementById("checador-numero").value.trim();
+  const contenedor = document.getElementById("checador-detectado");
+
+  if (!numero) return;
+
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
+
+    const encontrado = filas.find(fila =>
+      String(fila[0]).trim() === numero
+    );
+
+    if (!encontrado) {
+      contenedor.innerHTML = `
+        <p style="color:red;">
+          Checador no encontrado.
+        </p>
+      `;
+
+      checadorActualNumero = "";
+      checadorActualNombre = "";
+
+      localStorage.removeItem("checadorNumero");
+      localStorage.removeItem("checadorNombre");
+
+      return;
+    }
+
+    checadorActualNumero = numero;
+    checadorActualNombre = encontrado[1];
+
+    localStorage.setItem(
+      "checadorNumero",
+      checadorActualNumero
+    );
+
+    localStorage.setItem(
+      "checadorNombre",
+      checadorActualNombre
+    );
+
+    contenedor.innerHTML = `
+      <p style="color:green;">
+        Checador actual:
+        <strong>${checadorActualNombre}</strong>
+      </p>
+    `;
+
+  } catch (error) {
+    console.error(error);
+
+    contenedor.innerHTML = `
+      <p style="color:red;">
+        Error al buscar checador.
+      </p>
+    `;
+  }
+}
+
   function filtrarPedidos() {
   const lista = document.getElementById("lista-pedidos");
 
