@@ -301,6 +301,14 @@
   <div id="info-validacion"></div>
 
   <input
+  id="checador-numero"
+  placeholder="Número de checador"
+  onkeydown="leerChecador(event)"
+  >
+
+  <div id="checador-detectado"></div>
+    
+  <input
     id="scan-validacion"
     placeholder="Escanea ISBN o Código Gonvill"
     onkeydown="leerValidacionFisica(event)"
@@ -486,6 +494,8 @@
     let codigosEscaneadosValidacion = [];
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
+    let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
+    let checadorActualNombre = localStorage.getItem("checadorNombre") || "";
 
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
