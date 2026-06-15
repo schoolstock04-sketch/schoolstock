@@ -967,6 +967,7 @@ async function buscarSurtidor() {
   const periodoVenta = document.getElementById("nuevo-colegio-periodo").value.trim();
   const promotor = document.getElementById("nuevo-colegio-promotor").value.trim();
   const cuenta = document.getElementById("nuevo-colegio-cuenta").value.trim();
+  const usuario = document.getElementById("nuevo-colegio-usuario").value.trim();
   const password = document.getElementById("nuevo-colegio-password").value.trim();
   const aliasQR = document.getElementById("nuevo-colegio-alias").value.trim();
 
@@ -985,6 +986,7 @@ async function buscarSurtidor() {
         periodoVenta,
         promotor,
         cuenta,
+        usuario,
         password,
         aliasQR
       })
@@ -1011,7 +1013,6 @@ async function buscarSurtidor() {
     alert("No se pudo guardar el colegio.");
   }
 }
-
 
     async function guardarPedido() {
       const id = document.getElementById("id").value.trim();
