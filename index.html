@@ -736,6 +736,7 @@ function editarColegio(
   periodo,
   promotor,
   cuenta,
+  usuario,
   password,
   aliasQR
 ) {
@@ -745,12 +746,13 @@ function editarColegio(
   document.getElementById("nuevo-colegio-periodo").value = periodo;
   document.getElementById("nuevo-colegio-promotor").value = promotor;
   document.getElementById("nuevo-colegio-cuenta").value = cuenta;
+  document.getElementById("nuevo-colegio-usuario").value = usuario || "";
   document.getElementById("nuevo-colegio-password").value = password;
   document.getElementById("nuevo-colegio-alias").value = aliasQR || "";
 
   document.getElementById("modal-colegio").style.display = "block";
 }
-
+    
 function cerrarNuevoColegio() {
   document.getElementById("modal-colegio").style.display = "none";
 
@@ -758,6 +760,7 @@ function cerrarNuevoColegio() {
   document.getElementById("nuevo-colegio-periodo").value = "";
   document.getElementById("nuevo-colegio-promotor").value = "";
   document.getElementById("nuevo-colegio-cuenta").value = "";
+  document.getElementById("nuevo-colegio-usuario").value = "";
   document.getElementById("nuevo-colegio-password").value = "";
   document.getElementById("nuevo-colegio-alias").value = "";
 
