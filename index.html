@@ -616,9 +616,9 @@ function renderColegios(colegios) {
     const periodo = item.periodoVenta || "";
     const promotor = item.promotor || "";
     const cuenta = item.cuenta || "";
+    const usuario = item.usuario || "";
     const password = item.password || "";
     const aliasQR = item.aliasQR || "";
-
     if (
       textoBusqueda &&
       !normalizarTexto(nombre).includes(normalizarTexto(textoBusqueda))
@@ -649,6 +649,7 @@ function renderColegios(colegios) {
         <p><strong>Periodo:</strong><br>${periodo}</p>
         <p><strong>Promotor:</strong><br>${promotor}</p>
         <p><strong>Cuenta:</strong><br>${cuenta}</p>
+        <p><strong>Usuario:</strong><br>${usuario}</p>
         <p><strong>Password:</strong><br>${password}</p>
 
         ${
