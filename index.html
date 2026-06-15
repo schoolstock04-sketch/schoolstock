@@ -1104,6 +1104,10 @@ function leerQRPedido(event) {
 }
     
      async function marcarCompleto(id) {
+       if (!checadorActualNumero || !checadorActualNombre) {
+  alert("Primero ingresa el número de checador.");
+  return;
+}
   try {
     const respuesta = await fetch(SCRIPT_URL, {
       method: "POST",
