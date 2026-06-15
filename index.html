@@ -1697,10 +1697,89 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   }
 }
 
-   async function marcarIncompleto(id) {
-  const faltantes = prompt("Escribe los productos faltantes separados por |");
+ async function marcarIncompleto(id) {
+  const pedido = pedidosGlobal.find(fila => String(fila[0]) === String(id));
 
-  if (faltantes === null) return;
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
+  }
+
+  const productos = String(pedido[4] || "")
+    .split("/")
+    .map(p => p.trim())
+    .filter(Boolean);
+
+  const codigos = String(pedido[7] || "")
+    .split("/")
+    .map(c => String(c).trim().padStart(8, "0"))
+    .filter(Boolean);
+
+  if (codigos.length === 0) {
+    alert("Este pedido no tiene códigos Gonvill guardados.");
+    return;
+  }
+
+  pedidoFaltantesActual = pedido;
+
+  librosFaltantesActual = codigos.map((codigo, index) => ({
+    codigo,
+    titulo: productos[index] || codigo
+  }));
+
+  document.getElementById("info-faltantes").innerHTML = `
+    <p><strong>Pedido:</strong> ${pedido[0]}</p>
+    <p><strong>Alumno:</strong> ${pedido[1]}</p>
+    <p><strong>Colegio:</strong> ${pedido[3]}</p>
+  `;
+
+  document.getElementById("lista-faltantes-checks").innerHTML =
+    librosFaltantesActual.map((libro, index) => `
+      <label style="
+        display:block;
+        border:1px solid #ddd;
+        border-radius:8px;
+        padding:8px;
+        margin-bottom:8px;
+        background:white;
+      ">
+        <input
+          type="checkbox"
+          value="${index}"
+          class="check-faltante"
+          style="width:auto;"
+        >
+        <strong>${libro.codigo}</strong> — ${libro.titulo}
+      </label>
+    `).join("");
+
+  document.getElementById("modal-faltantes").style.display = "block";
+}
+
+    function cerrarModalFaltantes() {
+  document.getElementById("modal-faltantes").style.display = "none";
+  pedidoFaltantesActual = null;
+  librosFaltantesActual = [];
+}
+
+    async function guardarFaltantesSeleccionados() {
+  if (!pedidoFaltantesActual) return;
+
+  const checks = Array.from(
+    document.querySelectorAll(".check-faltante:checked")
+  );
+
+  if (checks.length === 0) {
+    alert("Selecciona al menos un libro faltante.");
+    return;
+  }
+
+  const faltantes = checks.map(check => {
+    const libro = librosFaltantesActual[Number(check.value)];
+    return `${libro.codigo} - ${libro.titulo}`;
+  });
+
+  const id = pedidoFaltantesActual[0];
 
   try {
     const respuesta = await fetch(SCRIPT_URL, {
@@ -1709,7 +1788,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
         accion: "actualizarPedido",
         id: id,
         status: "incompleto",
-        faltantes: faltantes
+        faltantes: faltantes.join("|")
       })
     });
 
@@ -1719,6 +1798,8 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
       alert("Error: " + resultado.error);
       return;
     }
+
+    cerrarModalFaltantes();
 
     if (
       resultado.requiereConfirmarUbicacion &&
@@ -1736,8 +1817,8 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     cargarAlertasFaltantes();
 
   } catch (error) {
-    alert("No se pudo actualizar el pedido.");
     console.error(error);
+    alert("No se pudo marcar el pedido como incompleto.");
   }
 }
     
