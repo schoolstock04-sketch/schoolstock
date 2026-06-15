@@ -2999,6 +2999,48 @@ function abrirValidacionFisica(id) {
     </p>
   `;
 
+  const listaEscaneados = codigosEscaneadosValidacion.map((codigo, index) => {
+    const esperadoCantidad = esperados[codigo] || 0;
+
+    const escaneadosHastaAqui = codigosEscaneadosValidacion
+      .slice(0, index + 1)
+      .filter(c => c === codigo)
+      .length;
+
+    const esValido =
+      esperadoCantidad > 0 &&
+      escaneadosHastaAqui <= esperadoCantidad;
+
+    return `
+      <div style="
+        border:1px solid ${esValido ? "#cde8d4" : "#f0c4bb"};
+        background:${esValido ? "#effaf3" : "#fff1ee"};
+        border-radius:8px;
+        padding:8px;
+        margin-bottom:6px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:8px;
+      ">
+        <span>
+          ${esValido ? "✓" : "⚠"} ${codigo}
+        </span>
+
+        <button
+          style="
+            width:auto;
+            padding:6px 10px;
+            background:#d94f2b;
+          "
+          onclick="eliminarEscaneoValidacion(${index})"
+        >
+          Eliminar
+        </button>
+      </div>
+    `;
+  }).join("");
+
   resultado.innerHTML = `
     ${
       faltantes.length
@@ -3012,6 +3054,15 @@ function abrirValidacionFisica(id) {
         : ""
     }
 
+    <div style="margin-top:12px;">
+      <strong>Escaneados:</strong>
+      ${
+        listaEscaneados
+          ? listaEscaneados
+          : "<p>No hay códigos escaneados todavía.</p>"
+      }
+    </div>
+
     ${
       completo
         ? `
@@ -3023,7 +3074,6 @@ function abrirValidacionFisica(id) {
     }
   `;
 }
-
     function cerrarValidacionFisica() {
   document.getElementById("modal-validacion").style.display = "none";
 
@@ -3034,6 +3084,15 @@ function abrirValidacionFisica(id) {
   document.getElementById("scan-validacion").value = "";
   document.getElementById("resultado-validacion").innerHTML = "";
 }
+
+    function eliminarEscaneoValidacion(index) {
+  codigosEscaneadosValidacion.splice(index, 1);
+  renderValidacionFisica();
+
+  document.getElementById("scan-validacion").focus();
+}
+
+    
     
     function normalizarTexto(texto) {
       return String(texto)
