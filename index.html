@@ -1680,41 +1680,50 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   }
 }
 
-    async function marcarIncompleto(id) {
-      const faltantes = prompt("Escribe los productos faltantes separados por |");
+   async function marcarIncompleto(id) {
+  const faltantes = prompt("Escribe los productos faltantes separados por |");
 
-      if (faltantes === null) return;
+  if (faltantes === null) return;
 
-      try {
-        const respuesta = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            accion: "actualizarPedido",
-            id: id,
-            status: "incompleto",
-            faltantes: faltantes
-          })
-        });
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "actualizarPedido",
+        id: id,
+        status: "incompleto",
+        faltantes: faltantes
+      })
+    });
 
-        const resultado = await respuesta.json();
+    const resultado = await respuesta.json();
 
-        if (!resultado.ok) {
-          alert("Error: " + resultado.error);
-          return;
-        }
-
-        alert("Pedido marcado como incompleto.");
-
-        cargarPedidos();
-        cargarInventario();
-        cargarAlertasFaltantes();
-
-      } catch (error) {
-        alert("No se pudo actualizar el pedido.");
-        console.error(error);
-      }
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
     }
 
+    if (
+      resultado.requiereConfirmarUbicacion &&
+      resultado.ubicacionPropuesta &&
+      resultado.ubicacionPropuesta.ok
+    ) {
+      mostrarConfirmacionUbicacion(resultado);
+      return;
+    }
+
+    alert("Pedido marcado como incompleto.");
+
+    cargarPedidos();
+    cargarInventario();
+    cargarAlertasFaltantes();
+
+  } catch (error) {
+    alert("No se pudo actualizar el pedido.");
+    console.error(error);
+  }
+}
+    
     function abrirNuevoProducto() {
       document.getElementById("modal-producto").style.display = "block";
     }
