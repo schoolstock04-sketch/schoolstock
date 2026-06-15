@@ -1754,6 +1754,11 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     `).join("");
 
   document.getElementById("modal-faltantes").style.display = "block";
+
+  document.getElementById("modal-faltantes").scrollIntoView({
+  behavior: "smooth",
+  block: "start"
+});
 }
 
     function cerrarModalFaltantes() {
