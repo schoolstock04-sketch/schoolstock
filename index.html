@@ -320,6 +320,21 @@
     Cerrar
   </button>
 </div>
+
+<div id="modal-faltantes" class="card" style="display:none;">
+  <h2>Seleccionar libros faltantes</h2>
+
+  <div id="info-faltantes"></div>
+  <div id="lista-faltantes-checks"></div>
+
+  <button onclick="guardarFaltantesSeleccionados()">
+    Guardar incompleto
+  </button>
+
+  <button onclick="cerrarModalFaltantes()">
+    Cancelar
+  </button>
+</div>
   
   <div id="modal-paqueteria">
     <h2>Registrar envío</h2>
@@ -492,6 +507,8 @@
     let pedidoValidando = null;
     let codigosEsperadosValidacion = [];
     let codigosEscaneadosValidacion = [];
+    let pedidoFaltantesActual = null;
+    let librosFaltantesActual = [];
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
