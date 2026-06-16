@@ -768,6 +768,8 @@ function seleccionarColegio(nombre) {
 
   document.getElementById("colegio-activo-label").innerHTML =
     `<strong>Colegio activo:</strong> ${nombre}`;
+  
+    actualizarEncabezadoColegio();
 
   renderColegios(colegiosGlobal);
 
@@ -777,8 +779,22 @@ function seleccionarColegio(nombre) {
   cargarCajas();
 }
 
+  function actualizarEncabezadoColegio() {
+  const header = document.getElementById("colegio-header");
+
+  if (!header) return;
+
+  if (colegioActivo) {
+    header.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
+  } else {
+    header.innerHTML = "🏫 Ningún colegio seleccionado";
+  }
+}
+
 function limpiarFiltroGlobal() {
   colegioActivo = "";
+
+  actualizarEncabezadoColegio();
 
   document.getElementById("colegio-activo-label").innerHTML =
     "Ningún colegio seleccionado";
@@ -3353,6 +3369,7 @@ cargarAlertasFaltantes();
     cargarAlertasFaltantes();
     cargarCajas();
     cargarColegios();
+    actualizarEncabezadoColegio();
   </script>
 
 </body>
