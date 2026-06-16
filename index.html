@@ -3066,17 +3066,30 @@ function descargarFaltantesExcel() {
   URL.revokeObjectURL(url);
 }
 
+function limpiarAliasQR(texto) {
+  return String(texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[‘’´`]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function obtenerColegioPorAlias(nombreQR) {
-  const nombreNormalizado = normalizarTexto(nombreQR);
+  const nombreNormalizado = limpiarAliasQR(nombreQR);
 
   for (const colegio of colegiosGlobal) {
+    const nombreColegio = limpiarAliasQR(colegio.colegio || "");
 
-    const aliases = String(
-      colegio.aliasQR || ""
-    )
-    .split("|")
-    .map(a => normalizarTexto(a.trim()))
-    .filter(Boolean);
+    if (nombreColegio === nombreNormalizado) {
+      return colegio.colegio;
+    }
+
+    const aliases = String(colegio.aliasQR || "")
+      .split("|")
+      .map(a => limpiarAliasQR(a))
+      .filter(Boolean);
 
     if (aliases.includes(nombreNormalizado)) {
       return colegio.colegio;
