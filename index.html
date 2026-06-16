@@ -1804,11 +1804,6 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     return;
   }
 
-  const productos = String(pedido[4] || "")
-    .split("/")
-    .map(p => p.trim())
-    .filter(Boolean);
-
   const codigos = String(pedido[7] || "")
     .split("/")
     .map(c => String(c).trim().padStart(8, "0"))
@@ -1820,11 +1815,16 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   }
 
   pedidoFaltantesActual = pedido;
+  librosFaltantesActual = [];
 
-  librosFaltantesActual = codigos.map((codigo, index) => ({
-    codigo,
-    titulo: productos[index] || codigo
-  }));
+  for (const codigo of codigos) {
+    const libro = await obtenerLibroPorISBN(codigo);
+
+    librosFaltantesActual.push({
+      codigo: codigo,
+      titulo: libro?.titulo || codigo
+    });
+  }
 
   document.getElementById("info-faltantes").innerHTML = `
     <p><strong>Pedido:</strong> ${pedido[0]}</p>
@@ -1855,9 +1855,9 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   document.getElementById("modal-faltantes").style.display = "block";
 
   document.getElementById("modal-faltantes").scrollIntoView({
-  behavior: "smooth",
-  block: "start"
-});
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
     function cerrarModalFaltantes() {
