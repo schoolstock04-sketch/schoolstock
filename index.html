@@ -3102,8 +3102,11 @@ function abrirValidacionFisica(id) {
 
   pedidoValidando = pedido;
   codigosEsperadosValidacion = codigos;
-  codigosEscaneadosValidacion = [];
-
+  codigosEscaneadosValidacion = String(pedido[12] || "")
+  .split("/")
+  .map(c => String(c).trim().padStart(8, "0"))
+  .filter(Boolean);
+  
   document.getElementById("modal-validacion").style.display = "block";
   document.getElementById("scan-validacion").value = "";
   document.getElementById("resultado-validacion").innerHTML = "";
@@ -3113,13 +3116,18 @@ function abrirValidacionFisica(id) {
   document.getElementById("scan-validacion").focus();
 }
 
-  function marcarIncompletoDesdeValidacion() {
+ function marcarIncompletoDesdeValidacion() {
   if (!pedidoValidando) {
     alert("No hay pedido en validación.");
     return;
   }
 
   const id = pedidoValidando[0];
+
+  localStorage.setItem(
+    "codigosValidadosTemp_" + id,
+    JSON.stringify(codigosEscaneadosValidacion)
+  );
 
   cerrarValidacionFisica();
   marcarIncompleto(id);
