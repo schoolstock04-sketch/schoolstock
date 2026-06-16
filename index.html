@@ -1887,13 +1887,15 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
 
   try {
     const respuesta = await fetch(SCRIPT_URL, {
-      method: "POST",
       body: JSON.stringify({
-        accion: "actualizarPedido",
-        id: id,
-        status: "incompleto",
-        faltantes: faltantes.join("|")
-      })
+      accion: "actualizarPedido",
+      id: id,
+      status: "incompleto",
+      faltantes: faltantes.join("|"),
+      codigosValidados: JSON.parse(
+    localStorage.getItem("codigosValidadosTemp_" + id) || "[]"
+       )
+     })
     });
 
     const resultado = await respuesta.json();
