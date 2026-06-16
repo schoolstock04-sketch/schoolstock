@@ -1461,6 +1461,48 @@ async function obtenerLibroPorISBN(codigo) {
   return libro;
 }
 
+async function obtenerArticuloParaPedido(codigo, colegio) {
+  let libro = await obtenerLibroPorISBN(codigo);
+
+  if (libro && libro.titulo) {
+    return libro;
+  }
+
+  const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+  const datos = await respuesta.json();
+  const filas = datos.slice(1);
+
+  const codigoNormalizado = String(codigo)
+    .trim()
+    .padStart(8, "0");
+
+  const encontrado = filas.find(fila => {
+    const nombreInv = String(fila[0] || "").trim();
+    const colegioInv = String(fila[1] || "").trim();
+
+    const codigoInv = String(fila[6] || "")
+      .replace("'", "")
+      .trim()
+      .padStart(8, "0");
+
+    return (
+      nombreInv &&
+      normalizarTexto(colegioInv) === normalizarTexto(colegio) &&
+      codigoInv === codigoNormalizado
+    );
+  });
+
+  if (!encontrado) {
+    return null;
+  }
+
+  return {
+    codigo_gonvill: codigoNormalizado,
+    titulo: encontrado[0],
+    isbn: encontrado[7] || ""
+  };
+}
+  
 async function leerArchivoPedidoTXT(event) {
   const archivo = event.target.files[0];
   const resultado = document.getElementById("resultado-txt-pedido");
