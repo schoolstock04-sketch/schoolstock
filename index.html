@@ -3113,6 +3113,18 @@ function abrirValidacionFisica(id) {
   document.getElementById("scan-validacion").focus();
 }
 
+  function marcarIncompletoDesdeValidacion() {
+  if (!pedidoValidando) {
+    alert("No hay pedido en validación.");
+    return;
+  }
+
+  const id = pedidoValidando[0];
+
+  cerrarValidacionFisica();
+  marcarIncompleto(id);
+}
+
     function leerValidacionFisica(event) {
   if (event.key !== "Enter") return;
 
