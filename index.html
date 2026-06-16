@@ -812,26 +812,33 @@ function abrirNuevoColegio() {
   });
 }
 
-function editarColegio(
-  nombre,
-  periodo,
-  promotor,
-  cuenta,
-  usuario,
-  password,
-  aliasQR
-) {
-  colegioEditando = nombre;
+function editarColegio(nombre) {
+  const colegio = colegiosGlobal.find(item =>
+    normalizarTexto(item.colegio || "") === normalizarTexto(nombre)
+  );
 
-  document.getElementById("nuevo-colegio-nombre").value = nombre;
-  document.getElementById("nuevo-colegio-periodo").value = periodo;
-  document.getElementById("nuevo-colegio-promotor").value = promotor;
-  document.getElementById("nuevo-colegio-cuenta").value = cuenta;
-  document.getElementById("nuevo-colegio-usuario").value = usuario || "";
-  document.getElementById("nuevo-colegio-password").value = password;
-  document.getElementById("nuevo-colegio-alias").value = aliasQR || "";
+  if (!colegio) {
+    alert("No se encontró el colegio para editar.");
+    return;
+  }
 
-  document.getElementById("modal-colegio").style.display = "block";
+  colegioEditando = colegio.colegio || "";
+
+  document.getElementById("nuevo-colegio-nombre").value = colegio.colegio || "";
+  document.getElementById("nuevo-colegio-periodo").value = colegio.periodoVenta || "";
+  document.getElementById("nuevo-colegio-promotor").value = colegio.promotor || "";
+  document.getElementById("nuevo-colegio-cuenta").value = colegio.cuenta || "";
+  document.getElementById("nuevo-colegio-usuario").value = colegio.usuario || "";
+  document.getElementById("nuevo-colegio-password").value = colegio.password || "";
+  document.getElementById("nuevo-colegio-alias").value = colegio.aliasQR || "";
+
+  const modal = document.getElementById("modal-colegio");
+  modal.style.display = "block";
+
+  modal.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
     
 function cerrarNuevoColegio() {
