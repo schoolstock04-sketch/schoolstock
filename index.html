@@ -1866,7 +1866,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   librosFaltantesActual = [];
 }
 
-    async function guardarFaltantesSeleccionados() {
+   async function guardarFaltantesSeleccionados() {
   if (!pedidoFaltantesActual) return;
 
   const checks = Array.from(
@@ -1887,15 +1887,16 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
 
   try {
     const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
       body: JSON.stringify({
-      accion: "actualizarPedido",
-      id: id,
-      status: "incompleto",
-      faltantes: faltantes.join("|"),
-      codigosValidados: JSON.parse(
-    localStorage.getItem("codigosValidadosTemp_" + id) || "[]"
-       )
-     })
+        accion: "actualizarPedido",
+        id: id,
+        status: "incompleto",
+        faltantes: faltantes.join("|"),
+        codigosValidados: JSON.parse(
+          localStorage.getItem("codigosValidadosTemp_" + id) || "[]"
+        )
+      })
     });
 
     const resultado = await respuesta.json();
@@ -1904,6 +1905,8 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
       alert("Error: " + resultado.error);
       return;
     }
+
+    localStorage.removeItem("codigosValidadosTemp_" + id);
 
     cerrarModalFaltantes();
 
