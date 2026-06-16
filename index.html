@@ -1531,7 +1531,8 @@ async function leerArchivoPedidoTXT(event) {
 
       if (!codigo) continue;
 
-      const libro = await obtenerLibroPorISBN(codigo);
+      const colegio = document.getElementById("colegio").value.trim();
+      const libro = await obtenerArticuloParaPedido(codigo, colegio);
 
       if (!libro || !libro.titulo) {
         noEncontrados.push(codigo);
