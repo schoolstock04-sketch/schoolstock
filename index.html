@@ -3134,7 +3134,8 @@ function abrirValidacionFisica(id) {
     JSON.stringify(codigosEscaneadosValidacion)
   );
 
-  cerrarValidacionFisica();
+  document.getElementById("modal-validacion").style.display = "none";
+
   marcarIncompleto(id);
 }
 
