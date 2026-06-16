@@ -137,14 +137,43 @@
       margin-bottom: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
+  
+
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; background: #1f1c19; color: white; padding: 24px 14px; position: sticky; top: 0; height: 100vh; box-sizing: border-box; flex-shrink: 0; }
+    .sidebar h2 { margin: 0 0 6px 0; color: white; font-size: 28px; }
+    .sidebar small { display: block; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 28px; }
+    .sidebar button { background: transparent; color: #ddd; text-align: left; border-radius: 10px; margin-bottom: 8px; font-weight: bold; }
+    .sidebar button:hover, .sidebar button.activo { background: #d94f2b; color: white; }
+    .contenido { flex: 1; padding: 20px 28px; min-width: 0; }
+    .topbar h1 { margin-top: 0; }
+    .seccion { display: none; }
+    .seccion.activa { display: block; }
+    @media (max-width: 800px) { .layout { flex-direction: column; } .sidebar { width: auto; height: auto; position: relative; } }
   </style>
 </head>
 
 <body>
 
-  <h1>SchoolStock</h1>
-  <p id="estado">Conectando...</p>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>SchoolStock</h2>
+    <small>Gestión de pedidos</small>
+    <button class="tab-btn activo" onclick="mostrarSeccion('colegios', this)">🏫 Colegios</button>
+    <button class="tab-btn" onclick="mostrarSeccion('pedidos', this)">📦 Pedidos</button>
+    <button class="tab-btn" onclick="mostrarSeccion('inventario', this)">📚 Inventario</button>
+    <button class="tab-btn" onclick="mostrarSeccion('paqueteria', this)">🚚 Paquetería</button>
+    <button class="tab-btn" onclick="mostrarSeccion('ubicaciones', this)">📍 Ubicaciones</button>
+    <button class="tab-btn" onclick="mostrarSeccion('reportes', this)">📊 Reportes</button>
+  </aside>
 
+  <main class="contenido">
+    <div class="topbar">
+      <h1>SchoolStock</h1>
+      <p id="estado">Conectando...</p>
+    </div>
+
+    <section id="seccion-colegios" class="seccion activa">
   <div class="card">
   <h2>Seleccionar colegio</h2>
  
@@ -211,7 +240,9 @@
     Cancelar
   </button>
 </div>
+    </section>
 
+    <section id="seccion-pedidos" class="seccion">
   <div class="card">
   <h2>Nuevo pedido</h2>
 
@@ -253,7 +284,61 @@
 <div id="resultado-txt-pedido"></div>
   <button onclick="guardarPedido()">Guardar pedido</button>
 </div>
+  <div id="modal-validacion" class="card" style="display:none;">
+  <h2>Validación física de pedido</h2>
 
+  <div id="info-validacion"></div>
+
+  <input
+  id="checador-numero"
+  placeholder="Número de checador"
+  onkeydown="leerChecador(event)"
+  >
+
+  <div id="checador-detectado"></div>
+    
+  <input
+    id="scan-validacion"
+    placeholder="Escanea ISBN o Código Gonvill"
+    onkeydown="leerValidacionFisica(event)"
+  >
+
+  <div id="resultado-validacion"></div>
+
+  <button onclick="cerrarValidacionFisica()">
+    Cerrar
+  </button>
+</div>
+
+<div id="modal-faltantes" class="card" style="display:none;">
+  <h2>Seleccionar libros faltantes</h2>
+
+  <div id="info-faltantes"></div>
+  <div id="lista-faltantes-checks"></div>
+
+  <button onclick="guardarFaltantesSeleccionados()">
+    Guardar incompleto
+  </button>
+
+  <button onclick="cerrarModalFaltantes()">
+    Cancelar
+  </button>
+</div>
+  <div class="card">
+  <h2>Pedidos registrados</h2>
+
+  <input
+  id="buscar-pedido"
+  placeholder="Escanea QR o escribe número de pedido"
+  onkeydown="leerBusquedaPedidoQR(event)"
+  oninput="filtrarPedidos()"
+>
+
+  <div id="lista-pedidos"></div>
+</div>
+    </section>
+
+    <section id="seccion-inventario" class="seccion">
   <div class="card">
     <h2>Inventario</h2>
 
@@ -299,48 +384,24 @@
     <button onclick="guardarMovimientoInventario()">Guardar entrada</button>
     <button onclick="cerrarMovimientoInventario()">Cancelar</button>
   </div>
+  <div class="card">
+  <h2>Panel de inventario</h2>
 
-  <div id="modal-validacion" class="card" style="display:none;">
-  <h2>Validación física de pedido</h2>
+  <button
+  id="btn-minimizar-inventario"
+  class="btn-secundario"
+  onclick="toggleInventarioAlertas()"
+>
+  Ocultar lista de inventario
+</button>
 
-  <div id="info-validacion"></div>
-
-  <input
-  id="checador-numero"
-  placeholder="Número de checador"
-  onkeydown="leerChecador(event)"
-  >
-
-  <div id="checador-detectado"></div>
-    
-  <input
-    id="scan-validacion"
-    placeholder="Escanea ISBN o Código Gonvill"
-    onkeydown="leerValidacionFisica(event)"
-  >
-
-  <div id="resultado-validacion"></div>
-
-  <button onclick="cerrarValidacionFisica()">
-    Cerrar
-  </button>
+  <div id="kpis-inventario"></div>
+  <br>
+  <div id="lista-inventario"></div>
 </div>
+    </section>
 
-<div id="modal-faltantes" class="card" style="display:none;">
-  <h2>Seleccionar libros faltantes</h2>
-
-  <div id="info-faltantes"></div>
-  <div id="lista-faltantes-checks"></div>
-
-  <button onclick="guardarFaltantesSeleccionados()">
-    Guardar incompleto
-  </button>
-
-  <button onclick="cerrarModalFaltantes()">
-    Cancelar
-  </button>
-</div>
-  
+    <section id="seccion-paqueteria" class="seccion">
   <div id="modal-paqueteria">
     <h2>Registrar envío</h2>
 
@@ -363,7 +424,6 @@
     <button onclick="guardarPaquete()">Guardar envío</button>
     <button onclick="cerrarPaqueteria()">Cancelar</button>
   </div>
-
   <div class="card">
   <h2>Relación de cajas</h2>
 
@@ -403,10 +463,6 @@
 
   <div id="lista-cajas"></div>
 </div>
-
-  <div id="lista-cajas"></div>
-</div>
-
 <div class="card">
   <h2>Relación de paquetería</h2>
 
@@ -440,7 +496,9 @@
 
   <div id="lista-paqueteria"></div>
 </div>
+    </section>
 
+    <section id="seccion-ubicaciones" class="seccion">
 <div class="card">
   <h2>Buscar ubicación de pedido</h2>
 
@@ -454,23 +512,9 @@
 
   <div id="resultado-ubicacion"></div>
 </div>
+    </section>
 
-  <div class="card">
-  <h2>Panel de inventario</h2>
-
-  <button
-  id="btn-minimizar-inventario"
-  class="btn-secundario"
-  onclick="toggleInventarioAlertas()"
->
-  Ocultar lista de inventario
-</button>
-
-  <div id="kpis-inventario"></div>
-  <br>
-  <div id="lista-inventario"></div>
-</div>
-
+    <section id="seccion-reportes" class="seccion">
  <div class="card">
   <h2>Productos que bloquean pedidos</h2>
 
@@ -480,22 +524,34 @@
 
   <div id="alertas-faltantes"></div>
 </div>
-
-  <div class="card">
-  <h2>Pedidos registrados</h2>
-
-  <input
-  id="buscar-pedido"
-  placeholder="Escanea QR o escribe número de pedido"
-  onkeydown="leerBusquedaPedidoQR(event)"
-  oninput="filtrarPedidos()"
->
-
-  <div id="lista-pedidos"></div>
+    </section>
+  </main>
 </div>
 
+<script>
+  function mostrarSeccion(nombre, boton) {
+    document.querySelectorAll(".seccion").forEach(seccion => {
+      seccion.classList.remove("activa");
+    });
 
-  <script>
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.classList.remove("activo");
+    });
+
+    const seccion = document.getElementById("seccion-" + nombre);
+
+    if (seccion) {
+      seccion.classList.add("activa");
+    }
+
+    if (boton) {
+      boton.classList.add("activo");
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+
     const API_CATALOGO_URL = "http://192.168.3.62:3000";
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
     let pedidosGlobal = [];
