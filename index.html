@@ -538,6 +538,10 @@
     Descargar faltantes
   </button>
 
+   <button class="btn-secundario" onclick="repararFaltantesIncompletos()">
+  Reparar faltantes incompletos
+</button>
+
   <div id="alertas-faltantes"></div>
 </div>
     </section>
@@ -3343,7 +3347,81 @@ function abrirValidacionFisica(id) {
   document.getElementById("scan-validacion").focus();
 }
 
-    
+    async function repararFaltantesIncompletos() {
+  const confirmar = confirm(
+    "Esto reparará los faltantes de pedidos incompletos usando el código Gonvill.\n\n¿Continuar?"
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
+    const datos = await respuesta.json();
+    const pedidos = datos.slice(1);
+
+    let reparados = 0;
+    let errores = [];
+
+    for (const pedido of pedidos) {
+      const id = pedido[0];
+      const faltantesTexto = String(pedido[5] || "").trim();
+      const status = String(pedido[6] || "").toLowerCase();
+
+      if (status !== "incompleto" || !faltantesTexto) continue;
+
+      const faltantes = faltantesTexto
+        .split("|")
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      const faltantesReparados = [];
+
+      for (const faltante of faltantes) {
+        const codigo = String(faltante)
+          .split("-")[0]
+          .trim()
+          .padStart(8, "0");
+
+        if (!codigo) continue;
+
+        const libro = await obtenerLibroPorISBN(codigo);
+
+        if (libro && libro.titulo) {
+          faltantesReparados.push(
+            `${codigo} - ${libro.titulo}`
+          );
+        } else {
+          faltantesReparados.push(faltante);
+          errores.push(`${id}: no encontrado ${codigo}`);
+        }
+      }
+
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "actualizarFaltantesSolo",
+          id: id,
+          faltantes: faltantesReparados.join("|")
+        })
+      });
+
+      reparados++;
+    }
+
+    alert(
+      "Reparación terminada.\n\n" +
+      "Pedidos revisados/reparados: " + reparados +
+      (errores.length ? "\n\nErrores:\n" + errores.join("\n") : "")
+    );
+
+    cargarPedidos();
+    cargarAlertasFaltantes();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudieron reparar los faltantes.");
+  }
+}
     
     function normalizarTexto(texto) {
       return String(texto)
