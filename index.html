@@ -340,20 +340,8 @@
     Cancelar
   </button>
 </div>
-  <div class="card">
-  <h2>Pedidos registrados</h2>
 
-  <input
-  id="buscar-pedido"
-  placeholder="Escanea QR o escribe número de pedido"
-  onkeydown="leerBusquedaPedidoQR(event)"
-  oninput="filtrarPedidos()"
->
-
-  <div id="lista-pedidos"></div>
-</div>
-
-      <div id="modal-editar-libros" class="card" style="display:none;">
+       <div id="modal-editar-libros" class="card" style="display:none;">
   <h2>Editar libros del pedido</h2>
 
   <div id="info-editar-libros"></div>
@@ -366,6 +354,19 @@
   <button onclick="cerrarEditarLibros()">
     Cancelar
   </button>
+</div>
+      
+  <div class="card">
+  <h2>Pedidos registrados</h2>
+
+  <input
+  id="buscar-pedido"
+  placeholder="Escanea QR o escribe número de pedido"
+  onkeydown="leerBusquedaPedidoQR(event)"
+  oninput="filtrarPedidos()"
+>
+
+  <div id="lista-pedidos"></div>
 </div>
       
     </section>
