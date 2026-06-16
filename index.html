@@ -381,6 +381,21 @@
     <button onclick="cerrarNuevoProducto()">Cancelar</button>
   </div>
 
+  <div id="modal-editar-libros" class="card" style="display:none;">
+  <h2>Editar libros del pedido</h2>
+
+  <div id="info-editar-libros"></div>
+  <div id="lista-editar-libros"></div>
+
+  <button onclick="guardarLibrosEditados()">
+    Guardar cambios
+  </button>
+
+  <button onclick="cerrarEditarLibros()">
+    Cancelar
+  </button>
+</div>
+      
   <div id="modal-movimiento">
     <h2>Entrada de inventario</h2>
 
@@ -590,6 +605,8 @@
     let codigosEscaneadosValidacion = [];
     let pedidoFaltantesActual = null;
     let librosFaltantesActual = [];
+    let pedidoEditandoLibros = null;
+    let librosEditandoPedido = [];
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
@@ -3471,7 +3488,160 @@ function abrirValidacionFisica(id) {
     alert("No se pudieron reparar los faltantes.");
   }
 }
-    
+
+  async function editarLibrosPedido(id) {
+  const pedido = pedidosGlobal.find(fila => String(fila[0]) === String(id));
+
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
+  }
+
+  const codigos = String(pedido[7] || "")
+    .split("/")
+    .map(c => String(c).trim().padStart(8, "0"))
+    .filter(Boolean);
+
+  if (codigos.length === 0) {
+    alert("Este pedido no tiene códigos Gonvill guardados.");
+    return;
+  }
+
+  pedidoEditandoLibros = pedido;
+  librosEditandoPedido = [];
+
+  for (const codigo of codigos) {
+    const libro = await obtenerArticuloParaPedido(codigo, pedido[3]);
+
+    librosEditandoPedido.push({
+      codigo,
+      titulo: libro?.titulo || codigo
+    });
+  }
+
+  document.getElementById("info-editar-libros").innerHTML = `
+    <p><strong>Pedido:</strong> ${pedido[0]}</p>
+    <p><strong>Alumno:</strong> ${pedido[1]}</p>
+    <p><strong>Colegio:</strong> ${pedido[3]}</p>
+    <p>Deja marcados solo los libros que sí debe conservar el pedido.</p>
+  `;
+
+  document.getElementById("lista-editar-libros").innerHTML =
+    librosEditandoPedido.map((libro, index) => `
+      <label style="
+        display:block;
+        border:1px solid #ddd;
+        border-radius:8px;
+        padding:8px;
+        margin-bottom:8px;
+        background:white;
+      ">
+        <input
+          type="checkbox"
+          class="check-libro-pedido"
+          value="${index}"
+          checked
+          style="width:auto;"
+        >
+        <strong>${libro.codigo}</strong> — ${libro.titulo}
+      </label>
+    `).join("");
+
+  document.getElementById("modal-editar-libros").style.display = "block";
+
+  document.getElementById("modal-editar-libros").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+  function cerrarEditarLibros() {
+  document.getElementById("modal-editar-libros").style.display = "none";
+  pedidoEditandoLibros = null;
+  librosEditandoPedido = [];
+}
+
+  async function guardarLibrosEditados() {
+  if (!pedidoEditandoLibros) return;
+
+  const checks = Array.from(
+    document.querySelectorAll(".check-libro-pedido:checked")
+  );
+
+  if (checks.length === 0) {
+    alert("El pedido debe conservar al menos un libro.");
+    return;
+  }
+
+  const librosSeleccionados = checks.map(check =>
+    librosEditandoPedido[Number(check.value)]
+  );
+
+  const productosNuevos = librosSeleccionados
+    .map(libro => libro.titulo)
+    .join("/");
+
+  const codigosNuevos = librosSeleccionados
+    .map(libro => libro.codigo)
+    .join("/");
+
+  const codigosPermitidos = librosSeleccionados.map(libro => libro.codigo);
+
+  const faltantesActuales = String(pedidoEditandoLibros[5] || "")
+    .split("|")
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  const faltantesNuevos = faltantesActuales.filter(faltante => {
+    const codigo = String(faltante)
+      .split("-")[0]
+      .trim()
+      .padStart(8, "0");
+
+    return codigosPermitidos.includes(codigo);
+  });
+
+  const codigosValidadosActuales = String(pedidoEditandoLibros[12] || "")
+    .split("/")
+    .map(c => String(c).trim().padStart(8, "0"))
+    .filter(Boolean);
+
+  const codigosValidadosNuevos = codigosValidadosActuales.filter(codigo =>
+    codigosPermitidos.includes(codigo)
+  );
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "actualizarLibrosPedido",
+        id: pedidoEditandoLibros[0],
+        productos: productosNuevos,
+        codigosGonvill: codigosNuevos,
+        faltantes: faltantesNuevos.join("|"),
+        codigosValidados: codigosValidadosNuevos.join("/")
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Libros del pedido actualizados correctamente.");
+
+    cerrarEditarLibros();
+    cargarPedidos();
+    cargarAlertasFaltantes();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudieron actualizar los libros del pedido.");
+  }
+}
+  
     function normalizarTexto(texto) {
       return String(texto)
         .toLowerCase()
