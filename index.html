@@ -729,30 +729,30 @@ function renderColegios(colegios) {
         <p><strong>Usuario:</strong><br>${usuario}</p>
         <p><strong>Password:</strong><br>${password}</p>
 
-        ${
-          aliasQR
-            ? `<p><strong>Alias QR:</strong><br>${aliasQR}</p>`
-            : ""
-        }
+       ${
+  aliasQR
+    ? `<p><strong>Alias QR:</strong><br>${aliasQR}</p>`
+    : ""
+}
 
-        <button onclick="seleccionarColegio('${nombre}')">
-          Entrar
-        </button>
+<button onclick='seleccionarColegio(${JSON.stringify(nombre)})'>
+  Entrar
+</button>
 
-        <button
-          class="btn-secundario"
-          onclick="editarColegio('${nombre}')"
-        >
-          Editar
-        </button>
+<button
+  class="btn-secundario"
+  onclick='editarColegio(${JSON.stringify(nombre)})'
+>
+  Editar
+</button>
 
-        ${
-          colegioActivo
-            ? `<button class="btn-secundario" onclick="limpiarFiltroGlobal()">
-                 Mostrar todos los colegios
-               </button>`
-            : ""
-        }
+${
+  colegioActivo
+    ? `<button class="btn-secundario" onclick="limpiarFiltroGlobal()">
+         Mostrar todos los colegios
+       </button>`
+    : ""
+}
       </div>
     `;
   }).join("");
