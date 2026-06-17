@@ -3436,6 +3436,94 @@ function abrirValidacionFisica(id) {
   document.getElementById("scan-validacion").focus();
 }
 
+  function abrirSurtirPedido(id) {
+  const pedido = pedidosGlobal.find(
+    fila => String(fila[0]) === String(id)
+  );
+
+  if (!pedido) {
+    alert("Pedido no encontrado.");
+    return;
+  }
+
+  pedidoSurtiendo = pedido;
+
+  document.getElementById("info-surtir-pedido").innerHTML = `
+    <p><strong>Pedido:</strong> ${pedido[0]}</p>
+    <p><strong>Alumno:</strong> ${pedido[1]}</p>
+    <p><strong>Colegio:</strong> ${pedido[3]}</p>
+  `;
+
+  document.getElementById("surtir-empleado-numero").value = "";
+  document.getElementById("surtir-empleado-detectado").innerHTML = "";
+
+  document.getElementById("modal-surtir-pedido").style.display = "block";
+
+  document.getElementById("surtir-empleado-numero").focus();
+}
+
+  function cerrarSurtirPedido() {
+  document.getElementById("modal-surtir-pedido").style.display = "none";
+
+  pedidoSurtiendo = null;
+  surtidorPedidoNumero = "";
+  surtidorPedidoNombre = "";
+}
+
+  function leerEmpleadoSurtidorPedido(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+  buscarEmpleadoSurtidorPedido();
+}
+
+  async function buscarEmpleadoSurtidorPedido() {
+  const numero = document
+    .getElementById("surtir-empleado-numero")
+    .value
+    .trim();
+
+  const contenedor = document.getElementById("surtir-empleado-detectado");
+
+  if (!numero) return;
+
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
+
+    const encontrado = filas.find(fila =>
+      String(fila[0]).trim() === numero
+    );
+
+    if (!encontrado) {
+      surtidorPedidoNumero = "";
+      surtidorPedidoNombre = "";
+
+      contenedor.innerHTML = `
+        <p style="color:red;">Empleado no encontrado.</p>
+      `;
+      return;
+    }
+
+    surtidorPedidoNumero = numero;
+    surtidorPedidoNombre = encontrado[1];
+
+    contenedor.innerHTML = `
+      <p style="color:green;">
+        Surtidor detectado:
+        <strong>${surtidorPedidoNombre}</strong>
+      </p>
+    `;
+
+  } catch (error) {
+    console.error(error);
+    contenedor.innerHTML = `
+      <p style="color:red;">Error al buscar empleado.</p>
+    `;
+  }
+}
+
     async function repararFaltantesIncompletos() {
   const confirmar = confirm(
     "Esto reparará los faltantes de pedidos incompletos usando el código Gonvill.\n\n¿Continuar?"
