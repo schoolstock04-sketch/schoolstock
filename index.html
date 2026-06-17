@@ -1061,22 +1061,48 @@ async function buscarSurtidor() {
     const productos = fila[4];
     const faltantes = fila[5] || "";
     const status = fila[6] || "pendiente";
+    const surtidor = fila[9] || "Sin asignar";
+    const checador = fila[11] || "Sin asignar";
 
-    pedido.innerHTML = `
+pedido.innerHTML = `
   <strong>#${id}</strong><br>
   Alumno: ${alumno}<br>
   Grado: ${grado}<br>
   Colegio: ${colegio}<br>
-  Productos: ${productos}<br>
+
+  <details>
+    <summary><strong>📚 Productos</strong></summary>
+    <div style="
+      margin-top:8px;
+      padding:8px;
+      background:#f8f8f8;
+      border-radius:8px;
+      white-space:normal;
+      word-break:break-word;
+    ">
+      ${productos}
+    </div>
+  </details>
+
+  <br>
+
   Faltantes: ${faltantes || "Ninguno"}<br>
-  Estado: <span class="status">${status}</span><br><br>
+
+  Estado:
+  <span class="status">${status}</span><br>
+
+  Surtidor:
+  <strong>${surtidor}</strong><br>
+
+  Checador:
+  <strong>${checador}</strong><br><br>
 
   <button class="btn-secundario" onclick="abrirSurtirPedido('${id}')">
-  👷 Surtir pedido
+    👷 Surtir pedido
   </button>
 
   <button class="btn-secundario" onclick="abrirValidacionFisica('${id}')">
-   🔎 Validar físico
+    🔎 Validar físico
   </button>
 
   <button class="btn-secundario" onclick="editarLibrosPedido('${id}')">
@@ -1091,7 +1117,7 @@ async function buscarSurtidor() {
     📦 Registrar envío
   </button>
 `;
-
+    
     lista.appendChild(pedido);
   });
 
