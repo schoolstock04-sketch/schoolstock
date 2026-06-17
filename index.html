@@ -347,6 +347,28 @@
     Cancelar
   </button>
 </div>
+
+      <div id="modal-surtir-pedido" class="card" style="display:none;">
+  <h2>Surtir pedido</h2>
+
+  <div id="info-surtir-pedido"></div>
+
+  <input
+    id="surtir-empleado-numero"
+    placeholder="Número de empleado"
+    onkeydown="leerEmpleadoSurtidorPedido(event)"
+  >
+
+  <div id="surtir-empleado-detectado"></div>
+
+  <button onclick="confirmarSurtidorPedido()">
+    Confirmar surtidor
+  </button>
+
+  <button onclick="cerrarSurtirPedido()">
+    Cancelar
+  </button>
+</div>
       
   <div class="card">
   <h2>Pedidos registrados</h2>
