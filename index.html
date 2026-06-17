@@ -3524,6 +3524,50 @@ function abrirValidacionFisica(id) {
   }
 }
 
+  async function confirmarSurtidorPedido() {
+  if (!pedidoSurtiendo) {
+    alert("No hay pedido seleccionado.");
+    return;
+  }
+
+  if (!surtidorPedidoNumero || !surtidorPedidoNombre) {
+    alert("Primero captura un empleado válido.");
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "actualizarSurtidorPedido",
+        id: pedidoSurtiendo[0],
+        surtidorNumero: surtidorPedidoNumero,
+        surtidorNombre: surtidorPedidoNombre
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert(
+      "Pedido asignado a:\n\n" +
+      surtidorPedidoNombre
+    );
+
+    cerrarSurtirPedido();
+
+    cargarPedidos();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo asignar el surtidor.");
+  }
+}
+
     async function repararFaltantesIncompletos() {
   const confirmar = confirm(
     "Esto reparará los faltantes de pedidos incompletos usando el código Gonvill.\n\n¿Continuar?"
