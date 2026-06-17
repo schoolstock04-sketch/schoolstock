@@ -1138,17 +1138,17 @@ async function buscarSurtidor() {
       }
 
      const fila = [
-      id,
-      alumno,
-      grado,
-      colegio,
-      productos,
-      "",
-      "pendiente",
-       codigosGonvillPedido.join("/"),
-       surtidorActualNumero,
-       surtidorActualNombre
-    ];
+     id,
+     alumno,
+     grado,
+     colegio,
+     productos,
+     "",
+     "pendiente",
+     codigosGonvillPedido.join("/"),
+     "",
+     ""
+   ];
 
       try {
         const respuesta = await fetch(SCRIPT_URL, {
