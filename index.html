@@ -2964,22 +2964,22 @@ function toggleInventarioAlertas() {
 
   kpis.innerHTML = `
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
-      <div class="card" style="flex:1; min-width:120px;">
+      <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarInventarioEstado('ok')">
         <h3 style="color:green;">${ok}</h3>
         <p>Stock OK</p>
       </div>
 
-      <div class="card" style="flex:1; min-width:120px;">
+      <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarInventarioEstado('bajo')">
         <h3 style="color:orange;">${low}</h3>
         <p>Stock bajo</p>
       </div>
 
-      <div class="card" style="flex:1; min-width:120px;">
+      <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarInventarioEstado('sin')">
         <h3 style="color:red;">${zero}</h3>
         <p>Sin stock</p>
       </div>
 
-      <div class="card" style="flex:1; min-width:120px;">
+      <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarInventarioEstado('todos')">
         <h3 style="color:#2b6dd9;">${porcentajeRecibido}%</h3>
         <p>Mercancía recibida</p>
       </div>
@@ -2993,7 +2993,24 @@ function toggleInventarioAlertas() {
     return;
   }
 
-  filas.forEach(fila => {
+  let filasMostrar = filas;
+
+  if (filtroInventarioEstado === "ok") {
+    filasMostrar = filas.filter(fila => Number(fila[2]) > 5);
+  }
+
+  if (filtroInventarioEstado === "bajo") {
+    filasMostrar = filas.filter(fila => {
+      const stock = Number(fila[2]) || 0;
+      return stock > 0 && stock <= 5;
+    });
+  }
+
+  if (filtroInventarioEstado === "sin") {
+    filasMostrar = filas.filter(fila => Number(fila[2]) <= 0);
+  }
+
+  filasMostrar.forEach(fila => {
     const nombre = fila[0];
     const colegio = fila[1];
     const stock = Number(fila[2]) || 0;
@@ -3029,8 +3046,10 @@ function toggleInventarioAlertas() {
       ">
         <strong>${nombre}</strong><br>
         <span style="color:#666">${colegio}</span><br>
+
         <span style="color:#444;">
-          Código Gonvill: <strong>${codigoGonvill}</strong>
+          Código Gonvill:
+          <strong>${codigoGonvill}</strong>
         </span>
 
         <div class="${clase}">
@@ -3049,7 +3068,8 @@ function toggleInventarioAlertas() {
         </div>
 
         <div class="barra-stock">
-          <div class="barra-fill"
+          <div
+            class="barra-fill"
             style="
               width:${porcentaje}%;
               background:${color};
@@ -3060,13 +3080,18 @@ function toggleInventarioAlertas() {
     `;
   });
 
-  if (filas.length === 0) {
+  if (filasMostrar.length === 0) {
     lista.innerHTML = `
       <p>No hay productos para mostrar.</p>
     `;
   }
 }
 
+function filtrarInventarioEstado(estado) {
+  filtroInventarioEstado = estado;
+  cargarInventario();
+}
+  
 async function cargarAlertasFaltantes() {
   try {
     const [resPedidos, resInventario] = await Promise.all([
