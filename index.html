@@ -1033,6 +1033,7 @@ async function buscarSurtidor() {
 
   function filtrarPedidos() {
   const lista = document.getElementById("lista-pedidos");
+  const kpis = document.getElementById("kpis-pedidos");
 
   lista.innerHTML = "";
 
@@ -1040,6 +1041,8 @@ async function buscarSurtidor() {
     lista.innerHTML = `
       <p>Selecciona un colegio para ver pedidos.</p>
     `;
+
+    if (kpis) kpis.innerHTML = "";
     return;
   }
 
@@ -1048,30 +1051,67 @@ async function buscarSurtidor() {
     .value
     .trim();
 
-  pedidosFiltrados = pedidosGlobal.filter(fila => {
-    const idPedido = String(fila[0]);
+  const pedidosColegio = pedidosGlobal.filter(fila => {
     const colegioPedido = String(fila[3] || "");
-    const status = String(fila[6] || "pendiente").toLowerCase();
 
-    const estadosOcultos = [
-      "completo",
-      "caja",
-      "en caja",
-      "paqueteria",
-      "paquetería",
-      "enviado"
-    ];
+    return (
+      normalizarTexto(colegioPedido) ===
+      normalizarTexto(colegioActivo)
+    );
+  });
 
-    const sigueActivo = !estadosOcultos.includes(status);
+  const contarEstado = estado => {
+    return pedidosColegio.filter(fila =>
+      normalizarTexto(fila[6] || "pendiente") === normalizarTexto(estado)
+    ).length;
+  };
+
+  const total = pedidosColegio.length;
+  const pendientes = contarEstado("pendiente");
+  const incompletos = contarEstado("incompleto");
+  const completos = contarEstado("completo");
+
+  if (kpis) {
+    kpis.innerHTML = `
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('todos')">
+          <h3 style="color:#2b6dd9;">${total}</h3>
+          <p>Todos</p>
+        </div>
+
+        <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('pendiente')">
+          <h3 style="color:#d48b00;">${pendientes}</h3>
+          <p>Pendientes</p>
+        </div>
+
+        <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('incompleto')">
+          <h3 style="color:#d94f2b;">${incompletos}</h3>
+          <p>Incompletos</p>
+        </div>
+
+        <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('completo')">
+          <h3 style="color:green;">${completos}</h3>
+          <p>Completos</p>
+        </div>
+      </div>
+    `;
+  }
+
+  pedidosFiltrados = pedidosColegio.filter(fila => {
+    const idPedido = String(fila[0]);
+    const status = normalizarTexto(fila[6] || "pendiente");
 
     const coincideTexto =
       !texto || idPedido.includes(texto);
 
-    const coincideColegio =
-      normalizarTexto(colegioPedido) ===
-      normalizarTexto(colegioActivo);
+    let coincideEstado = true;
 
-    return coincideTexto && coincideColegio && sigueActivo;
+    if (filtroEstadoPedidos !== "todos") {
+      coincideEstado =
+        status === normalizarTexto(filtroEstadoPedidos);
+    }
+
+    return coincideTexto && coincideEstado;
   });
 
   pedidosFiltrados.forEach(fila => {
@@ -1088,64 +1128,69 @@ async function buscarSurtidor() {
     const surtidor = fila[9] || "Sin asignar";
     const checador = fila[11] || "Sin asignar";
 
-pedido.innerHTML = `
-  <strong>#${id}</strong><br>
-  Alumno: ${alumno}<br>
-  Grado: ${grado}<br>
-  Colegio: ${colegio}<br>
+    pedido.innerHTML = `
+      <strong>#${id}</strong><br>
+      Alumno: ${alumno}<br>
+      Grado: ${grado}<br>
+      Colegio: ${colegio}<br>
 
-  <details>
-    <summary><strong>📚 Productos</strong></summary>
-    <div style="
-      margin-top:8px;
-      padding:8px;
-      background:#f8f8f8;
-      border-radius:8px;
-      white-space:normal;
-      word-break:break-word;
-    ">
-      ${productos}
-    </div>
-  </details>
+      <details>
+        <summary><strong>📚 Productos</strong></summary>
+        <div style="
+          margin-top:8px;
+          padding:8px;
+          background:#f8f8f8;
+          border-radius:8px;
+          white-space:normal;
+          word-break:break-word;
+        ">
+          ${productos}
+        </div>
+      </details>
 
-  <br>
+      <br>
 
-  Faltantes: ${faltantes || "Ninguno"}<br>
+      Faltantes: ${faltantes || "Ninguno"}<br>
 
-  Estado:
-  <span class="status">${status}</span><br>
+      Estado:
+      <span class="status">${status}</span><br>
 
-  Surtidor:
-  <strong>${surtidor}</strong><br>
+      Surtidor:
+      <strong>${surtidor}</strong><br>
 
-  Checador:
-  <strong>${checador}</strong><br><br>
+      Checador:
+      <strong>${checador}</strong><br><br>
 
-  <button class="btn-secundario" onclick="abrirSurtirPedido('${id}')">
-    👷 Surtir pedido
-  </button>
+      <button class="btn-secundario" onclick="abrirSurtirPedido('${id}')">
+        👷 Surtir pedido
+      </button>
 
-  <button class="btn-secundario" onclick="abrirValidacionFisica('${id}')">
-    🔎 Validar físico
-  </button>
+      <button class="btn-secundario" onclick="abrirValidacionFisica('${id}')">
+        🔎 Validar físico
+      </button>
 
-  <button class="btn-secundario" onclick="editarLibrosPedido('${id}')">
-    ✏️ Editar libros
-  </button>
+      <button class="btn-secundario" onclick="editarLibrosPedido('${id}')">
+        ✏️ Editar libros
+      </button>
 
-  <button onclick="marcarIncompleto('${id}')">
-    ✗ Incompleto
-  </button>
-`;
-    
+      <button onclick="marcarIncompleto('${id}')">
+        ✗ Incompleto
+      </button>
+    `;
+
     lista.appendChild(pedido);
   });
 
   if (pedidosFiltrados.length === 0) {
     lista.innerHTML = `
-      <p>No se encontraron pedidos activos con ese filtro.</p>
+      <p>No se encontraron pedidos con ese filtro.</p>
     `;
   }
+}
+  
+  function filtrarPedidosEstado(estado) {
+  filtroEstadoPedidos = estado;
+  filtrarPedidos();
 }
   
   async function guardarColegio() {
