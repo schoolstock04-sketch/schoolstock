@@ -1361,32 +1361,33 @@ function leerQRPedido(event) {
 }
     
 function mostrarConfirmacionUbicacion(resultado) {
+  ubicacionPendiente = resultado;
+
   const ubicacion = resultado.ubicacionPropuesta.ubicacion;
 
-  const confirmar = confirm(
-    "Pedido incompleto.\n\n" +
-    "Faltantes:\n" +
-    resultado.faltantes.join(", ") +
-    "\n\nUbicación sugerida:\n" +
-    ubicacion +
-    "\n\n¿Cabe este pedido en esa ubicación?"
-  );
+  document.getElementById("info-ubicacion").innerHTML = `
+    <p><strong>Pedido:</strong> ${resultado.pedidoId}</p>
+    <p><strong>Alumno:</strong> ${resultado.alumno}</p>
+    <p><strong>Colegio:</strong> ${resultado.colegio}</p>
 
-  if (confirmar) {
-    confirmarUbicacionPedidoHTML(
-      resultado.pedidoId,
-      resultado.alumno,
-      resultado.colegio,
-      ubicacion
-    );
-  } else {
-    rechazarUbicacionHTML(
-      resultado.pedidoId,
-      resultado.alumno,
-      resultado.colegio,
-      ubicacion
-    );
-  }
+    <p><strong>Faltantes:</strong><br>
+      ${(resultado.faltantes || []).join("<br>")}
+    </p>
+
+    <p>
+      Ubicación sugerida:
+      <span style="font-size:22px; color:#2a8a56; font-weight:bold;">
+        ${ubicacion}
+      </span>
+    </p>
+  `;
+
+  document.getElementById("modal-ubicacion").style.display = "block";
+
+  document.getElementById("modal-ubicacion").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 
 async function confirmarUbicacionPedidoHTML(pedidoId, alumno, colegio, ubicacion) {
@@ -1445,6 +1446,73 @@ async function rechazarUbicacionHTML(pedidoId, alumno, colegio, ubicacion) {
   } catch (error) {
     console.error(error);
     alert("No se pudo rechazar la ubicación.");
+  }
+}
+
+  function cancelarUbicacionSinMarcar() {
+  document.getElementById("modal-ubicacion").style.display = "none";
+  ubicacionPendiente = null;
+}
+
+  function confirmarUbicacionActual() {
+  if (!ubicacionPendiente) {
+    alert("No hay ubicación pendiente.");
+    return;
+  }
+
+  const ubicacion = ubicacionPendiente.ubicacionPropuesta.ubicacion;
+
+  confirmarUbicacionPedidoHTML(
+    ubicacionPendiente.pedidoId,
+    ubicacionPendiente.alumno,
+    ubicacionPendiente.colegio,
+    ubicacion
+  );
+
+  document.getElementById("modal-ubicacion").style.display = "none";
+  ubicacionPendiente = null;
+}
+
+  async function buscarOtraUbicacion() {
+  if (!ubicacionPendiente) {
+    alert("No hay ubicación pendiente.");
+    return;
+  }
+
+  const ubicacionActual = ubicacionPendiente.ubicacionPropuesta.ubicacion;
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "rechazarUbicacion",
+        ubicacion: ubicacionActual
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    const nuevaUbicacion = resultado.nuevaUbicacion;
+
+    if (!nuevaUbicacion || !nuevaUbicacion.ok) {
+      alert("Ubicación marcada como llena, pero no se encontró otra ubicación disponible.");
+      document.getElementById("modal-ubicacion").style.display = "none";
+      ubicacionPendiente = null;
+      return;
+    }
+
+    ubicacionPendiente.ubicacionPropuesta = nuevaUbicacion;
+
+    mostrarConfirmacionUbicacion(ubicacionPendiente);
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo buscar otra ubicación.");
   }
 }
 
