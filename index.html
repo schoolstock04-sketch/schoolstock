@@ -1544,7 +1544,7 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
     .trim()
     .padStart(8, "0");
 
-  const encontrado = filas.find(fila => {
+  let encontrado = filas.find(fila => {
     const nombreInv = String(fila[0] || "").trim();
     const colegioInv = String(fila[1] || "").trim();
 
@@ -1559,6 +1559,22 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
       codigoInv === codigoNormalizado
     );
   });
+
+  if (!encontrado) {
+    encontrado = filas.find(fila => {
+      const nombreInv = String(fila[0] || "").trim();
+
+      const codigoInv = String(fila[6] || "")
+        .replace("'", "")
+        .trim()
+        .padStart(8, "0");
+
+      return (
+        nombreInv &&
+        codigoInv === codigoNormalizado
+      );
+    });
+  }
 
   if (!encontrado) {
     return null;
