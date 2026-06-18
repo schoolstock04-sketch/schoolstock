@@ -764,6 +764,7 @@ function renderColegios(colegios) {
     const cuenta = item.cuenta || "";
     const usuario = item.usuario || "";
     const password = item.password || "";
+    const tipoEnvio = item.tipoEnvio || "";
     const aliasQR = item.aliasQR || "";
     if (
       textoBusqueda &&
@@ -797,6 +798,7 @@ function renderColegios(colegios) {
         <p><strong>Cuenta:</strong><br>${cuenta}</p>
         <p><strong>Usuario:</strong><br>${usuario}</p>
         <p><strong>Password:</strong><br>${password}</p>
+        <p><strong>Tipo de envío:</strong><br>${tipoEnvio}</p>
 
        ${
   aliasQR
