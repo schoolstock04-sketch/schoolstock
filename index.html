@@ -1205,6 +1205,7 @@ async function buscarSurtidor() {
   const cuenta = document.getElementById("nuevo-colegio-cuenta").value.trim();
   const usuario = document.getElementById("nuevo-colegio-usuario").value.trim();
   const password = document.getElementById("nuevo-colegio-password").value.trim();
+  const tipoEnvio = document.getElementById("nuevo-colegio-tipo-envio").value.trim();
   const aliasQR = document.getElementById("nuevo-colegio-alias").value.trim();
 
   if (!colegio || !periodoVenta || !promotor || !cuenta || !password) {
@@ -1224,6 +1225,7 @@ async function buscarSurtidor() {
         cuenta,
         usuario,
         password,
+        tipoEnvio,
         aliasQR
       })
     });
