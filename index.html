@@ -375,6 +375,26 @@
   </button>
 </div>
 
+      <div id="modal-guia" class="card" style="display:none;">
+  <h2>Cargar guía de envío</h2>
+
+  <div id="info-guia-pedido"></div>
+
+  <input
+    type="file"
+    id="archivo-guia"
+    accept=".pdf"
+  >
+
+  <button onclick="subirGuiaPedidoHTML()">
+    Subir guía
+  </button>
+
+  <button onclick="cerrarModalGuia()">
+    Cancelar
+  </button>
+</div>
+
       <div id="modal-ubicacion" class="card" style="display:none;">
   <h2>Confirmar ubicación</h2>
 
@@ -4073,6 +4093,88 @@ function abrirValidacionFisica(id) {
     console.error(error);
     alert("No se pudieron actualizar los libros del pedido.");
   }
+}
+
+  function abrirModalGuia(id) {
+  const pedido = pedidosGlobal.find(
+    fila => String(fila[0]) === String(id)
+  );
+
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
+  }
+
+  pedidoGuiaActual = pedido;
+
+  document.getElementById("info-guia-pedido").innerHTML = `
+    <p><strong>Pedido:</strong> ${pedido[0]}</p>
+    <p><strong>Alumno:</strong> ${pedido[1]}</p>
+  `;
+
+  document.getElementById("archivo-guia").value = "";
+
+  document.getElementById("modal-guia").style.display = "block";
+}
+
+  function cerrarModalGuia() {
+  document.getElementById("modal-guia").style.display = "none";
+  pedidoGuiaActual = null;
+}
+
+  async function subirGuiaPedidoHTML() {
+
+  if (!pedidoGuiaActual) {
+    alert("No hay pedido seleccionado.");
+    return;
+  }
+
+  const archivo =
+    document.getElementById("archivo-guia").files[0];
+
+  if (!archivo) {
+    alert("Selecciona un PDF.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = async function(e) {
+
+    const base64 = e.target.result.split(",")[1];
+
+    try {
+
+      const respuesta = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "subirGuiaPedido",
+          id: pedidoGuiaActual[0],
+          nombreArchivo: archivo.name,
+          mimeType: archivo.type,
+          archivoBase64: base64
+        })
+      });
+
+      const resultado = await respuesta.json();
+
+      if (!resultado.ok) {
+        alert("Error: " + resultado.error);
+        return;
+      }
+
+      alert("Guía cargada correctamente.");
+
+      cerrarModalGuia();
+      cargarPedidos();
+
+    } catch(error) {
+      console.error(error);
+      alert("No se pudo subir la guía.");
+    }
+  };
+
+  reader.readAsDataURL(archivo);
 }
   
     function normalizarTexto(texto) {
