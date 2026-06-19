@@ -1685,14 +1685,17 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
 
   const tituloCatalogo = String(libro?.titulo || "").trim();
 
-  if (
-    libro &&
-    tituloCatalogo &&
-    tituloCatalogo !== codigoNormalizado &&
-    tituloCatalogo !== String(Number(codigoNormalizado))
-  ) {
+  const tituloMalo =
+    !tituloCatalogo ||
+    tituloCatalogo === codigoNormalizado ||
+    tituloCatalogo === String(Number(codigoNormalizado));
+
+  if (libro && !tituloMalo) {
     return libro;
   }
+
+  delete cacheISBN[codigoNormalizado];
+  delete cacheISBN[String(Number(codigoNormalizado))];
 
   const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
   const datos = await respuesta.json();
@@ -1731,11 +1734,15 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
     return null;
   }
 
-  return {
+  const articuloInventario = {
     codigo_gonvill: codigoNormalizado,
     titulo: encontrado[0],
     isbn: encontrado[7] || ""
   };
+
+  cacheISBN[codigoNormalizado] = articuloInventario;
+
+  return articuloInventario;
 }
   
 async function leerArchivoPedidoTXT(event) {
