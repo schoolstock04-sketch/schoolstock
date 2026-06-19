@@ -2102,7 +2102,7 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   librosFaltantesActual = [];
 
   for (const codigo of codigos) {
-    const libro = await obtenerLibroPorISBN(codigo);
+   const libro = await obtenerArticuloParaPedido(codigo, pedido[3]);
 
     librosFaltantesActual.push({
       codigo: codigo,
