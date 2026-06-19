@@ -1157,6 +1157,8 @@ async function buscarSurtidor() {
     const status = fila[6] || "pendiente";
     const surtidor = fila[9] || "Sin asignar";
     const checador = fila[11] || "Sin asignar";
+    const guiaURL = fila[13] || "";
+    const guiaNombre = fila[14] || "";
 
     pedido.innerHTML = `
       <strong>#${id}</strong><br>
@@ -1202,6 +1204,23 @@ async function buscarSurtidor() {
       <button class="btn-secundario" onclick="editarLibrosPedido('${id}')">
         ✏️ Editar libros
       </button>
+
+      <button class="btn-secundario" onclick="abrirModalGuia('${id}')">
+        📎 Cargar guía
+      </button>
+
+     ${
+        guiaURL
+            ? `
+           <button
+              class="btn-secundario"
+            onclick="window.open('${guiaURL}','_blank')"
+          >
+            👁 Ver guía
+           </button>
+         `
+       : ""
+    }
 
       <button onclick="marcarIncompleto('${id}')">
         ✗ Incompleto
