@@ -4134,6 +4134,11 @@ function abrirValidacionFisica(id) {
   document.getElementById("archivo-guia").value = "";
 
   document.getElementById("modal-guia").style.display = "block";
+
+  document.getElementById("modal-guia").scrollIntoView({
+  behavior: "smooth",
+  block: "start"
+  });
 }
 
   function cerrarModalGuia() {
