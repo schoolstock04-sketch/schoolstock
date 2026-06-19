@@ -1677,19 +1677,26 @@ async function obtenerLibroPorISBN(codigo) {
 }
 
 async function obtenerArticuloParaPedido(codigo, colegio) {
-  let libro = await obtenerLibroPorISBN(codigo);
+  const codigoNormalizado = String(codigo)
+    .trim()
+    .padStart(8, "0");
 
-  if (libro && libro.titulo) {
+  let libro = await obtenerLibroPorISBN(codigoNormalizado);
+
+  const tituloCatalogo = String(libro?.titulo || "").trim();
+
+  if (
+    libro &&
+    tituloCatalogo &&
+    tituloCatalogo !== codigoNormalizado &&
+    tituloCatalogo !== String(Number(codigoNormalizado))
+  ) {
     return libro;
   }
 
   const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
   const datos = await respuesta.json();
   const filas = datos.slice(1);
-
-  const codigoNormalizado = String(codigo)
-    .trim()
-    .padStart(8, "0");
 
   let encontrado = filas.find(fila => {
     const nombreInv = String(fila[0] || "").trim();
@@ -1716,10 +1723,7 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
         .trim()
         .padStart(8, "0");
 
-      return (
-        nombreInv &&
-        codigoInv === codigoNormalizado
-      );
+      return nombreInv && codigoInv === codigoNormalizado;
     });
   }
 
