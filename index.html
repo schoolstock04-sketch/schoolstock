@@ -1201,6 +1201,32 @@ async function buscarSurtidor() {
   filtroEstadoPedidos = estado;
   filtrarPedidos();
 }
+
+function validarAccesoValidacion(id) {
+  const pedido = pedidosGlobal.find(
+    fila => String(fila[0]) === String(id)
+  );
+
+  if (!pedido) {
+    alert("No se encontró el pedido.");
+    return;
+  }
+
+  const surtidorNumero = String(pedido[8] || "").trim();
+  const surtidorNombre = String(pedido[9] || "").trim();
+
+  if (!surtidorNumero || !surtidorNombre) {
+    alert(
+      "⚠️ Este pedido no tiene surtidor asignado.\n\n" +
+      "Primero asigna el empleado que surtió el pedido."
+    );
+
+    abrirSurtirPedido(id);
+    return;
+  }
+
+  abrirValidacionFisica(id);
+}
   
   async function guardarColegio() {
   const colegio = document.getElementById("nuevo-colegio-nombre").value.trim();
