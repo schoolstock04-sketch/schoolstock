@@ -3286,62 +3286,91 @@ async function cargarAlertasFaltantes() {
 }
 
     function renderAlertasFaltantes(pedidos, inventario) {
-      const contenedor = document.getElementById("alertas-faltantes");
-      const mapa = {};
+  const contenedor = document.getElementById("alertas-faltantes");
+  const mapa = {};
 
-      pedidos.forEach(pedido => {
-        const colegio = pedido[3];
+  pedidos.forEach(pedido => {
+    const colegio = pedido[3];
 
-        const faltantes = String(pedido[5] || "")
-          .split("|")
-          .map(x => x.trim())
-          .filter(Boolean);
+    const faltantes = String(pedido[5] || "")
+      .split("|")
+      .map(x => x.trim())
+      .filter(Boolean);
 
-        faltantes.forEach(producto => {
-          const clave = `${normalizarTexto(producto)}__${normalizarTexto(colegio)}`;
+    faltantes.forEach(faltante => {
+      const partes = String(faltante).split("-");
+      const posibleCodigo = String(partes[0] || "")
+        .trim()
+        .padStart(8, "0");
 
-          if (!mapa[clave]) {
-            mapa[clave] = {
-              producto: producto,
-              colegio: colegio,
-              pedidos: 0,
-              stock: "No encontrado"
-            };
-          }
+      const tieneCodigo = /^\d{8}$/.test(posibleCodigo);
 
-          mapa[clave].pedidos++;
-        });
-      });
+      const encontrado = tieneCodigo
+        ? inventario.find(inv => {
+            const codigoInv = String(inv[6] || "")
+              .replace("'", "")
+              .trim()
+              .padStart(8, "0");
 
-      Object.values(mapa).forEach(item => {
-        const encontrado = inventario.find(inv =>
-          normalizarTexto(inv[0]) === normalizarTexto(item.producto) &&
-          normalizarTexto(inv[1]) === normalizarTexto(item.colegio)
-        );
+            return codigoInv === posibleCodigo;
+          })
+        : null;
 
-        if (encontrado) {
-          item.stock = Number(encontrado[2]);
-        }
-      });
+      const productoMostrar = encontrado
+        ? encontrado[0]
+        : faltante;
 
-      const alertas = Object.values(mapa)
-        .sort((a, b) => b.pedidos - a.pedidos);
-        faltantesGlobal = alertas;
+      const colegioMostrar = encontrado
+        ? encontrado[1]
+        : colegio;
 
-      if (alertas.length === 0) {
-        contenedor.innerHTML = "<p>No hay productos bloqueando pedidos.</p>";
-        return;
+      const stockMostrar = encontrado
+        ? Number(encontrado[2]) || 0
+        : "No encontrado";
+
+      const codigoMostrar = tieneCodigo
+        ? posibleCodigo
+        : "";
+
+      const clave = tieneCodigo
+        ? `${posibleCodigo}__${normalizarTexto(colegioMostrar)}`
+        : `${normalizarTexto(productoMostrar)}__${normalizarTexto(colegioMostrar)}`;
+
+      if (!mapa[clave]) {
+        mapa[clave] = {
+          codigo: codigoMostrar,
+          producto: productoMostrar,
+          colegio: colegioMostrar,
+          pedidos: 0,
+          stock: stockMostrar
+        };
       }
 
-      contenedor.innerHTML = alertas.map(item => `
-        <div class="alerta-faltante">
-          <strong>${item.producto}</strong><br>
-          <span>${item.colegio}</span><br>
-          Falta en <strong>${item.pedidos}</strong> pedido(s)<br>
-          Stock actual: <strong>${item.stock}</strong>
-        </div>
-      `).join("");
-    }
+      mapa[clave].pedidos++;
+    });
+  });
+
+  const alertas = Object.values(mapa)
+    .sort((a, b) => b.pedidos - a.pedidos);
+
+  faltantesGlobal = alertas;
+
+  if (alertas.length === 0) {
+    contenedor.innerHTML = "<p>No hay productos bloqueando pedidos.</p>";
+    return;
+  }
+
+  contenedor.innerHTML = alertas.map(item => `
+    <div class="alerta-faltante">
+      <strong>
+        ${item.codigo ? item.codigo + " - " : ""}${item.producto}
+      </strong><br>
+      <span>${item.colegio}</span><br>
+      Falta en <strong>${item.pedidos}</strong> pedido(s)<br>
+      Stock actual: <strong>${item.stock}</strong>
+    </div>
+  `).join("");
+}
 
 function descargarFaltantesExcel() {
   if (!faltantesGlobal || faltantesGlobal.length === 0) {
