@@ -1337,12 +1337,25 @@ function validarAccesoValidacion(id) {
       const alumno = document.getElementById("alumno").value.trim();
       const grado = document.getElementById("grado").value.trim();
       const colegio = document.getElementById("colegio").value.trim();
-      const productos = document.getElementById("productos").value.trim();
+     const productos = document.getElementById("productos").value.trim();
 
-      if (!id || !alumno || !grado || !colegio || !productos) {
-        alert("Completa todos los campos.");
-        return;
-      }
+if (!id || !alumno || !grado || !colegio || !productos) {
+  alert("Completa todos los campos.");
+  return;
+}
+
+if (
+  colegioActivo &&
+  normalizarTexto(colegio) !== normalizarTexto(colegioActivo)
+) {
+  alert(
+    "No se puede registrar este pedido aquí.\n\n" +
+    "Colegio activo: " + colegioActivo + "\n" +
+    "Colegio del pedido: " + colegio + "\n\n" +
+    "Cambia al colegio correcto antes de guardar."
+  );
+  return;
+}
 
      const fila = [
      id,
