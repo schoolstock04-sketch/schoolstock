@@ -1773,11 +1773,12 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
   delete cacheISBN[codigoNormalizado];
   delete cacheISBN[String(Number(codigoNormalizado))];
 
-  const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
-  const datos = await respuesta.json();
-  const filas = datos.slice(1);
+  // 1. Buscar en Inventario
+  const respInv = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+  const datosInv = await respInv.json();
+  const inventario = datosInv.slice(1);
 
-  let encontrado = filas.find(fila => {
+  let encontradoInv = inventario.find(fila => {
     const nombreInv = String(fila[0] || "").trim();
     const colegioInv = String(fila[1] || "").trim();
 
@@ -1793,8 +1794,8 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
     );
   });
 
-  if (!encontrado) {
-    encontrado = filas.find(fila => {
+  if (!encontradoInv) {
+    encontradoInv = inventario.find(fila => {
       const nombreInv = String(fila[0] || "").trim();
 
       const codigoInv = String(fila[6] || "")
@@ -1806,19 +1807,43 @@ async function obtenerArticuloParaPedido(codigo, colegio) {
     });
   }
 
-  if (!encontrado) {
-    return null;
+  if (encontradoInv) {
+    const articuloInventario = {
+      codigo_gonvill: codigoNormalizado,
+      titulo: encontradoInv[0],
+      isbn: encontradoInv[7] || ""
+    };
+
+    cacheISBN[codigoNormalizado] = articuloInventario;
+    return articuloInventario;
   }
 
-  const articuloInventario = {
-    codigo_gonvill: codigoNormalizado,
-    titulo: encontrado[0],
-    isbn: encontrado[7] || ""
-  };
+  // 2. Buscar en CatalogoManual
+  const respManual = await fetch(`${SCRIPT_URL}?hoja=CatalogoManual`);
+  const datosManual = await respManual.json();
+  const catalogoManual = datosManual.slice(1);
 
-  cacheISBN[codigoNormalizado] = articuloInventario;
+  const encontradoManual = catalogoManual.find(fila => {
+    const codigoManual = String(fila[0] || "")
+      .trim()
+      .padStart(8, "0");
 
-  return articuloInventario;
+    return codigoManual === codigoNormalizado;
+  });
+
+  if (encontradoManual) {
+    const articuloManual = {
+      codigo_gonvill: codigoNormalizado,
+      titulo: encontradoManual[1],
+      autor: encontradoManual[2] || "",
+      isbn: encontradoManual[3] || ""
+    };
+
+    cacheISBN[codigoNormalizado] = articuloManual;
+    return articuloManual;
+  }
+
+  return null;
 }
   
 async function leerArchivoPedidoTXT(event) {
