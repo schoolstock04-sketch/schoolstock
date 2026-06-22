@@ -1252,6 +1252,16 @@ function validarAccesoValidacion(id) {
     return;
   }
 
+  const status = normalizarTexto(pedido[6] || "pendiente");
+
+  if (status === "completo") {
+    alert(
+      "Este pedido ya fue validado y marcado como completo.\n\n" +
+      "No se puede volver a validar."
+    );
+    return;
+  }
+
   const surtidorNumero = String(pedido[8] || "").trim();
   const surtidorNombre = String(pedido[9] || "").trim();
 
