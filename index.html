@@ -3826,6 +3826,16 @@ function abrirValidacionFisica(id) {
     return;
   }
 
+  const status = normalizarTexto(pedido[6] || "pendiente");
+
+  if (status === "completo") {
+    alert(
+      "Este pedido ya está completo.\n\n" +
+      "No se puede cambiar el surtidor."
+    );
+    return;
+  }
+
   pedidoSurtiendo = pedido;
 
   document.getElementById("info-surtir-pedido").innerHTML = `
@@ -3841,7 +3851,7 @@ function abrirValidacionFisica(id) {
 
   document.getElementById("surtir-empleado-numero").focus();
 }
-
+  
   function cerrarSurtirPedido() {
   document.getElementById("modal-surtir-pedido").style.display = "none";
 
