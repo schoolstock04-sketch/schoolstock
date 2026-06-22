@@ -2150,7 +2150,12 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
   try {
     resultado.innerHTML = "<p>Buscando artículo...</p>";
 
-    const libro = await obtenerLibroPorISBN(codigo);
+    const colegio =
+      document.getElementById("prod-colegio")?.value ||
+      document.getElementById("colegio")?.value ||
+      "";
+
+    const libro = await obtenerArticuloParaPedido(codigo, colegio);
 
     if (!libro) {
       resultado.innerHTML = `
@@ -2162,8 +2167,9 @@ async function buscarISBNParaCampo(inputISBNId, campoDestinoId, resultadoId) {
     }
 
     document.getElementById(campoDestinoId).value = libro.titulo;
+
     if (campoDestinoId === "prod-nombre") {
-       libroProductoSeleccionado = libro;
+      libroProductoSeleccionado = libro;
     }
 
     resultado.innerHTML = `
