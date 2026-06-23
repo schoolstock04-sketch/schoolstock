@@ -4294,10 +4294,11 @@ function abrirValidacionFisica(id) {
     const respuesta = await fetch(SCRIPT_URL, {
       method: "POST",
       body: JSON.stringify({
-        accion: "generarPapeletaPedido",
-        id: pedido[0],
-        alumno: pedido[1],
-        grado: pedido[2]
+          accion: "generarPapeletaPedido",
+          id: pedido[0],
+          alumno: pedido[1],
+          grado: pedido[2],
+          colegio: pedido[3]
       })
     });
 
