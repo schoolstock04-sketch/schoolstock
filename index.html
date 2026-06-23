@@ -4307,6 +4307,12 @@ function abrirValidacionFisica(id) {
       alert("Error: " + resultado.error);
       return;
     }
+    const link = document.createElement("a");
+    link.href = resultado.downloadUrl;
+    link.download = resultado.nombre + ".docx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     window.open(resultado.url, "_blank");
 
