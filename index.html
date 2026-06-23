@@ -4277,6 +4277,49 @@ function abrirValidacionFisica(id) {
 
   reader.readAsDataURL(archivo);
 }
+
+  async function generarPapeleta(id) {
+
+  const pedido = pedidosGlobal.find(
+    fila => String(fila[0]) === String(id)
+  );
+
+  if (!pedido) {
+    alert("Pedido no encontrado.");
+    return;
+  }
+
+  try {
+
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "generarPapeletaPedido",
+        id: pedido[0],
+        alumno: pedido[1],
+        grado: pedido[2]
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    window.open(resultado.url, "_blank");
+
+  } catch(error) {
+
+    console.error(error);
+
+    alert(
+      "No se pudo generar la papeleta."
+    );
+
+  }
+}
   
     function normalizarTexto(texto) {
       return String(texto)
