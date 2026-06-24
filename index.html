@@ -3635,22 +3635,31 @@ function abrirValidacionFisica(id) {
   marcarIncompleto(id);
 }
 
-    function leerValidacionFisica(event) {
+   function leerValidacionFisica(event) {
   if (event.key !== "Enter") return;
 
   event.preventDefault();
 
   const input = document.getElementById("scan-validacion");
-  const codigo = input.value.trim();
+
+  let codigo = input.value.trim();
 
   if (!codigo) return;
+
+  // Elimina espacios y caracteres raros
+  codigo = codigo.replace(/\s+/g, "");
+
+  // Si es un código Gonvill corto, completar a 8 dígitos
+  if (/^\d+$/.test(codigo) && codigo.length <= 8) {
+    codigo = codigo.padStart(8, "0");
+  }
 
   validarCodigoFisico(codigo);
 
   input.value = "";
   input.focus();
 }
-
+  
     async function validarCodigoFisico(codigo) {
   try {
     const libro = await obtenerLibroPorISBN(codigo);
