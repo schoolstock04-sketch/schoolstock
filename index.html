@@ -4366,6 +4366,47 @@ function abrirValidacionFisica(id) {
     alert("No se pudo generar el reporte de plataformas.");
   }
 }
+
+  async function retirarPedidoCaja(pedidoId) {
+  if (!pedidoId) {
+    alert("Pedido inválido.");
+    return;
+  }
+
+  const confirmar = confirm(
+    "¿Seguro que quieres retirar el pedido " +
+    pedidoId +
+    " de la caja?"
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "retirarPedidoCaja",
+        pedido: pedidoId
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Pedido retirado de la caja correctamente.");
+
+    cargarCajas();
+    cargarPedidos();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo retirar el pedido de la caja.");
+  }
+}
   
     function normalizarTexto(texto) {
       return String(texto)
