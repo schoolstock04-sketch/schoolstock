@@ -619,6 +619,10 @@
   Reparar faltantes incompletos
 </button>
 
+   <button onclick="generarReportePlataformasHTML()">
+  📊 Reporte plataformas
+</button>
+
   <div id="alertas-faltantes"></div>
 </div>
     </section>
@@ -4323,6 +4327,41 @@ function abrirValidacionFisica(id) {
       "No se pudo generar la papeleta."
     );
 
+  }
+}
+
+  async function generarReportePlataformasHTML() {
+  if (!colegioActivo) {
+    alert("Selecciona primero un colegio.");
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "generarReportePlataformas",
+        colegio: colegioActivo
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = resultado.downloadUrl;
+    link.download = resultado.nombre + ".xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo generar el reporte de plataformas.");
   }
 }
   
