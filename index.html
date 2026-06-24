@@ -2615,10 +2615,9 @@ function procesarQRCaja() {
   `;
 }
 
-   async function agregarPedidoACaja() {
+  function agregarPedidoACaja() {
   const caja = document.getElementById("caja-numero").value.trim();
   const pedido = document.getElementById("caja-pedido").value.trim();
-
   const colegioCaja = colegioDetectadoCaja;
 
   if (!caja || !pedido) {
@@ -2631,41 +2630,34 @@ function procesarQRCaja() {
     return;
   }
 
-  try {
-    const respuesta = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        accion: "registrarCaja",
-        caja: caja,
-        colegioCaja: colegioCaja,
-        pedido: pedido
-      })
-    });
+  const repetido = pedidosCajaTemporal.some(
+    item => String(item.pedido) === String(pedido)
+  );
 
-    const resultado = await respuesta.json();
-
-    if (!resultado.ok) {
-      alert("Error: " + resultado.error);
-      return;
-    }
-
-    alert("Pedido agregado a caja correctamente.");
-
+  if (repetido) {
+    alert("Este pedido ya está en la lista.");
     document.getElementById("caja-pedido").value = "";
-    document.getElementById("resumen-qr-caja").innerHTML = "";
-
-    colegioDetectadoCaja = "";
-
     document.getElementById("caja-pedido").focus();
-
-    cargarCajas();
-
-  } catch(error) {
-    console.error(error);
-    alert("No se pudo agregar el pedido a la caja.");
+    return;
   }
-}
 
+  pedidosCajaTemporal.push({
+    caja,
+    pedido,
+    colegioCaja,
+    resumen: document.getElementById("resumen-qr-caja").innerHTML
+  });
+
+  colegioDetectadoCajaTemporal = colegioCaja;
+
+  document.getElementById("caja-pedido").value = "";
+  document.getElementById("resumen-qr-caja").innerHTML = "";
+  colegioDetectadoCaja = "";
+
+  renderPedidosCajaTemporal();
+
+  document.getElementById("caja-pedido").focus();
+}
 
 async function cerrarLoteCajas() {
   const confirmar = confirm(
@@ -4424,6 +4416,132 @@ function abrirValidacionFisica(id) {
   } catch (error) {
     console.error(error);
     alert("No se pudo retirar el pedido de la caja.");
+  }
+}
+
+  function renderPedidosCajaTemporal() {
+  const contenedor = document.getElementById("lista-pedidos-caja-temporal");
+
+  if (!contenedor) return;
+
+  if (pedidosCajaTemporal.length === 0) {
+    contenedor.innerHTML = "";
+    return;
+  }
+
+  contenedor.innerHTML = `
+    <div style="
+      margin-top:12px;
+      padding:12px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      background:#f8f8f8;
+    ">
+      <strong>Pedidos escaneados: ${pedidosCajaTemporal.length}</strong>
+
+      ${pedidosCajaTemporal.map((item, index) => `
+        <div style="
+          margin-top:8px;
+          padding:8px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          background:white;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:10px;
+        ">
+          <div>
+            <strong>#${item.pedido}</strong><br>
+            Caja: ${item.caja}<br>
+            Colegio: ${item.colegioCaja}
+          </div>
+
+          <button
+            style="width:auto; padding:6px 10px; background:#d94f2b;"
+            onclick="eliminarPedidoCajaTemporal(${index})"
+          >
+            Eliminar
+          </button>
+        </div>
+      `).join("")}
+
+      <br>
+
+      <button onclick="registrarListaCaja()">
+        Registrar todos en caja
+      </button>
+
+      <button class="btn-secundario" onclick="limpiarListaCajaTemporal()">
+        Limpiar lista
+      </button>
+    </div>
+  `;
+}
+
+  function eliminarPedidoCajaTemporal(index) {
+  pedidosCajaTemporal.splice(index, 1);
+  renderPedidosCajaTemporal();
+}
+
+  function limpiarListaCajaTemporal() {
+  pedidosCajaTemporal = [];
+  colegioDetectadoCajaTemporal = "";
+  renderPedidosCajaTemporal();
+}
+
+  async function registrarListaCaja() {
+  if (pedidosCajaTemporal.length === 0) {
+    alert("No hay pedidos escaneados.");
+    return;
+  }
+
+  const confirmar = confirm(
+    "¿Registrar " +
+    pedidosCajaTemporal.length +
+    " pedido(s) en caja?"
+  );
+
+  if (!confirmar) return;
+
+  try {
+    for (const item of pedidosCajaTemporal) {
+      const respuesta = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "registrarCaja",
+          caja: item.caja,
+          colegioCaja: item.colegioCaja,
+          pedido: item.pedido
+        })
+      });
+
+      const resultado = await respuesta.json();
+
+      if (!resultado.ok) {
+        alert(
+          "Error con pedido " +
+          item.pedido +
+          ": " +
+          resultado.error
+        );
+        return;
+      }
+    }
+
+    alert("Pedidos registrados en caja correctamente.");
+
+    limpiarListaCajaTemporal();
+
+    document.getElementById("caja-pedido").value = "";
+    document.getElementById("resumen-qr-caja").innerHTML = "";
+
+    cargarCajas();
+    cargarPedidos();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo registrar la lista de caja.");
   }
 }
   
