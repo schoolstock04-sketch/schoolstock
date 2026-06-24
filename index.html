@@ -3660,9 +3660,13 @@ function abrirValidacionFisica(id) {
   input.focus();
 }
   
-    async function validarCodigoFisico(codigo) {
+   async function validarCodigoFisico(codigo) {
   try {
-    const libro = await obtenerLibroPorISBN(codigo);
+    const colegio = pedidoValidando
+      ? String(pedidoValidando[3] || "").trim()
+      : "";
+
+    let libro = await obtenerArticuloParaPedido(codigo, colegio);
 
     if (!libro || !libro.codigo_gonvill) {
       document.getElementById("resultado-validacion").innerHTML = `
@@ -3673,7 +3677,9 @@ function abrirValidacionFisica(id) {
       return;
     }
 
-    const codigoGonvill = String(libro.codigo_gonvill).trim().padStart(8, "0");
+    const codigoGonvill = String(libro.codigo_gonvill)
+      .trim()
+      .padStart(8, "0");
 
     codigosEscaneadosValidacion.push(codigoGonvill);
 
@@ -3681,6 +3687,7 @@ function abrirValidacionFisica(id) {
 
   } catch (error) {
     console.error(error);
+
     document.getElementById("resultado-validacion").innerHTML = `
       <p style="color:red;">
         Error al validar código.
