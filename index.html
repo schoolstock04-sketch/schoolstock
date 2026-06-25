@@ -2934,7 +2934,7 @@ async function registrarLotePaqueteria() {
 
   window.cajasGlobal = cajas;
 
-  contenedor.innerHTML = Object.entries(cajas).map(([caja, data]) => {
+    contenedor.innerHTML = Object.entries(cajas).reverse().map(([caja, data]) => {    
     const total = data.pedidos.length;
 
     const errores = data.pedidos.filter(p =>
