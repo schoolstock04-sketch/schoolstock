@@ -2557,14 +2557,17 @@ cargarInventario();
   }
 }
 
-    function leerPedidoCaja(event) {
-      if (event.key !== "Enter") return;
+    async function leerPedidoCaja(event) {
+  if (event.key !== "Enter") return;
 
-      event.preventDefault();
+  event.preventDefault();
 
-      procesarQRCaja();
-      agregarPedidoACajaTemporal();
-    }
+  await procesarQRCaja();
+
+  setTimeout(() => {
+    agregarPedidoACaja();
+  }, 100);
+}
 
 function procesarQRCaja() {
   const input = document.getElementById("caja-pedido");
