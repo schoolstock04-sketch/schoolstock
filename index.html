@@ -4739,22 +4739,15 @@ function abrirValidacionFisica(id) {
 }
 
   async function cargarEmpleados() {
-  try {
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
-    const datos = await respuesta.json();
+  const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
+  const datos = await respuesta.json();
 
-    empleadosGlobal = datos.slice(1).map(fila => ({
-      numero: String(fila[0] || fila[1] || "").trim(),
-      nombre: String(fila[1] || fila[0] || "").trim(),
-      filaOriginal: fila
-    }));
+  empleadosGlobal = datos.slice(1).map(fila => ({
+    numero: String(fila[0] || "").trim(),
+    nombre: String(fila[1] || "").trim()
+  }));
 
-    console.log("Empleados cargados:", empleadosGlobal);
-
-  } catch (error) {
-    console.error("Error cargando empleados:", error);
-    empleadosGlobal = [];
-  }
+  console.log("Empleados cargados:", empleadosGlobal);
 }
   
     function normalizarTexto(texto) {
