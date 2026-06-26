@@ -4584,24 +4584,30 @@ function abrirValidacionFisica(id) {
   }
 }
 
-  function leerEmpacadorEmpaque(event) {
+ function leerEmpacadorEmpaque(event) {
   if (event.key !== "Enter") return;
 
   event.preventDefault();
 
-  const numero = document.getElementById("empaque-empleado-numero").value.trim();
+  const numero = document
+    .getElementById("empaque-empleado-numero")
+    .value
+    .trim();
 
-  const empleado = empleadosGlobal.find(e =>
-    String(e.numero).trim() === String(numero)
-  );
+  if (!numero) return;
+
+  const empleado = empleadosGlobal.find(e => {
+    const numeroEmpleado = e.numero || e[0];
+    return String(numeroEmpleado).trim() === String(numero).trim();
+  });
 
   if (!empleado) {
     alert("Empacador no encontrado.");
     return;
   }
 
-  empacadorNumeroActual = numero;
-  empacadorNombreActual = empleado.nombre;
+  empacadorNumeroActual = String(empleado.numero || empleado[0]).trim();
+  empacadorNombreActual = empleado.nombre || empleado[1];
 
   document.getElementById("empaque-empleado-detectado").innerHTML = `
     <p><strong>Empacador:</strong> ${empacadorNombreActual}</p>
