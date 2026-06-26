@@ -155,6 +155,20 @@
 
 <body>
 
+  <div id="login-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f6f8; z-index:9999; display:flex; align-items:center; justify-content:center;">
+  <div class="card" style="max-width:420px; width:90%;">
+    <h2>SchoolStock</h2>
+    <p>Sistema de control de pedidos</p>
+
+    <input id="login-usuario" placeholder="Usuario">
+    <input id="login-password" type="password" placeholder="Contraseña" onkeydown="leerLoginEnter(event)">
+
+    <button onclick="loginUsuario()">Ingresar</button>
+
+    <div id="login-error"></div>
+  </div>
+</div>
+
 <div class="layout">
   <aside class="sidebar">
     <h2>SchoolStock</h2>
@@ -719,6 +733,9 @@
     let empacadorNombreActual = "";
     let pedidosEmpaqueTemporal = [];
     let empleadosGlobal = [];
+    let usuarioActual = "";
+    let rolActual = "";
+    let colegioUsuarioActual = "";
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
@@ -4747,6 +4764,62 @@ function abrirValidacionFisica(id) {
   }));
 
   console.log("Empleados cargados:", empleadosGlobal);
+}
+
+  function leerLoginEnter(event) {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  loginUsuario();
+}
+
+  function loginUsuario() {
+  const usuario = document.getElementById("login-usuario").value.trim();
+  const password = document.getElementById("login-password").value.trim();
+  const error = document.getElementById("login-error");
+
+  if (!usuario || !password) {
+    error.innerHTML = `<p style="color:red;">Ingresa usuario y contraseña.</p>`;
+    return;
+  }
+
+  if (usuario === "admin" && password === "1234") {
+    usuarioActual = "admin";
+    rolActual = "admin";
+    colegioUsuarioActual = "TODOS";
+  }
+  else if (usuario === "promotor" && password === "1234") {
+    usuarioActual = "promotor";
+    rolActual = "promotor";
+    colegioUsuarioActual = "MCGREGOR";
+  }
+  else {
+    error.innerHTML = `<p style="color:red;">Usuario o contraseña incorrectos.</p>`;
+    return;
+  }
+
+  document.getElementById("login-modal").style.display = "none";
+
+  aplicarPermisosUsuario();
+}
+
+  function aplicarPermisosUsuario() {
+  if (rolActual !== "promotor") return;
+
+  document.querySelectorAll("button").forEach(btn => {
+    const texto = btn.innerText.toLowerCase();
+
+    const permitido =
+      texto.includes("ver") ||
+      texto.includes("ocultar") ||
+      texto.includes("actualizar") ||
+      texto.includes("descargar") ||
+      texto.includes("reporte") ||
+      texto.includes("buscar");
+
+    if (!permitido) {
+      btn.style.display = "none";
+    }
+  });
 }
   
     function normalizarTexto(texto) {
