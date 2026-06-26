@@ -718,6 +718,7 @@
     let empacadorNumeroActual = "";
     let empacadorNombreActual = "";
     let pedidosEmpaqueTemporal = [];
+    let empleadosGlobal = [];
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
@@ -4733,6 +4734,22 @@ function abrirValidacionFisica(id) {
   } catch (error) {
     console.error(error);
     alert("No se pudo registrar el lote de empaque.");
+  }
+}
+
+  async function cargarEmpleados() {
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
+    const datos = await respuesta.json();
+
+    empleadosGlobal = datos.slice(1).map(fila => ({
+      numero: String(fila[0] || "").trim(),
+      nombre: String(fila[1] || "").trim()
+    }));
+
+  } catch (error) {
+    console.error("Error cargando empleados:", error);
+    empleadosGlobal = [];
   }
 }
   
