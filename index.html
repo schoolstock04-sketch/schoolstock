@@ -715,6 +715,9 @@
     let pedidoGuiaActual = null;
     let pedidosCajaTemporal = [];
     let colegioDetectadoCajaTemporal = "";
+    let empacadorNumeroActual = "";
+    let empacadorNombreActual = "";
+    let pedidosEmpaqueTemporal = [];
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
@@ -4578,6 +4581,149 @@ function abrirValidacionFisica(id) {
   } catch (error) {
     console.error(error);
     alert("No se pudo registrar la lista de caja.");
+  }
+}
+
+  function leerEmpacadorEmpaque(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
+  const numero = document.getElementById("empaque-empleado-numero").value.trim();
+
+  const empleado = empleadosGlobal.find(e =>
+    String(e.numero).trim() === String(numero)
+  );
+
+  if (!empleado) {
+    alert("Empacador no encontrado.");
+    return;
+  }
+
+  empacadorNumeroActual = numero;
+  empacadorNombreActual = empleado.nombre;
+
+  document.getElementById("empaque-empleado-detectado").innerHTML = `
+    <p><strong>Empacador:</strong> ${empacadorNombreActual}</p>
+  `;
+
+  document.getElementById("empaque-pedido").focus();
+}
+
+  function leerPedidoEmpaque(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+
+  if (!empacadorNumeroActual || !empacadorNombreActual) {
+    alert("Primero escanea el número del empacador.");
+    return;
+  }
+
+  let texto = document.getElementById("empaque-pedido").value.trim();
+
+  if (!texto) return;
+
+  const partes = texto.split("+");
+  const pedidoId = partes[0].trim();
+
+  if (!pedidoId) return;
+
+  if (pedidosEmpaqueTemporal.includes(pedidoId)) {
+    alert("Este pedido ya está en la lista.");
+    document.getElementById("empaque-pedido").value = "";
+    return;
+  }
+
+  pedidosEmpaqueTemporal.push(pedidoId);
+
+  document.getElementById("empaque-pedido").value = "";
+  renderEmpaqueTemporal();
+}
+
+  function renderEmpaqueTemporal() {
+  const contenedor = document.getElementById("lista-empaque-temporal");
+
+  if (pedidosEmpaqueTemporal.length === 0) {
+    contenedor.innerHTML = "";
+    return;
+  }
+
+  contenedor.innerHTML = `
+    <p><strong>Pedidos escaneados:</strong> ${pedidosEmpaqueTemporal.length}</p>
+
+    ${pedidosEmpaqueTemporal.map((pedido, index) => `
+      <div style="
+        border:1px solid #ddd;
+        border-radius:8px;
+        padding:8px;
+        margin-bottom:8px;
+        background:white;
+      ">
+        <strong>#${pedido}</strong>
+
+        <button
+          style="float:right; width:auto; padding:4px 8px;"
+          onclick="eliminarPedidoEmpaque(${index})"
+        >
+          Eliminar
+        </button>
+      </div>
+    `).join("")}
+  `;
+}
+
+  function eliminarPedidoEmpaque(index) {
+  pedidosEmpaqueTemporal.splice(index, 1);
+  renderEmpaqueTemporal();
+}
+
+  function limpiarEmpaqueTemporal() {
+  pedidosEmpaqueTemporal = [];
+
+  document.getElementById("empaque-pedido").value = "";
+  document.getElementById("lista-empaque-temporal").innerHTML = "";
+
+  document.getElementById("empaque-pedido").focus();
+}
+
+  async function registrarLoteEmpaqueHTML() {
+  if (!empacadorNumeroActual || !empacadorNombreActual) {
+    alert("Primero escanea el número del empacador.");
+    return;
+  }
+
+  if (pedidosEmpaqueTemporal.length === 0) {
+    alert("No hay pedidos escaneados.");
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "registrarLoteEmpaque",
+        empacadorNumero: empacadorNumeroActual,
+        empacadorNombre: empacadorNombreActual,
+        pedidos: pedidosEmpaqueTemporal
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Lote de empaque registrado correctamente.");
+
+    limpiarEmpaqueTemporal();
+    cargarPedidos();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo registrar el lote de empaque.");
   }
 }
   
