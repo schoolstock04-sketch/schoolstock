@@ -593,6 +593,36 @@
 </div>
     </section>
 
+    <section id="seccion-empaque" class="seccion">
+  <div class="card">
+    <h2>📦 Registro de empaque</h2>
+
+    <input
+      id="empaque-empleado-numero"
+      placeholder="Número de empacador"
+      onkeydown="leerEmpacadorEmpaque(event)"
+    >
+
+    <div id="empaque-empleado-detectado"></div>
+
+    <input
+      id="empaque-pedido"
+      placeholder="Escanea QR o número de pedido"
+      onkeydown="leerPedidoEmpaque(event)"
+    >
+
+    <div id="lista-empaque-temporal"></div>
+
+    <button onclick="registrarLoteEmpaqueHTML()">
+      Registrar lote de empaque
+    </button>
+
+    <button class="btn-secundario" onclick="limpiarEmpaqueTemporal()">
+      Limpiar lista
+    </button>
+  </div>
+</section>
+
     <section id="seccion-ubicaciones" class="seccion">
 <div class="card">
   <h2>Buscar ubicación de pedido</h2>
