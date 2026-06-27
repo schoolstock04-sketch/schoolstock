@@ -149,6 +149,24 @@
     .topbar h1 { margin-top: 0; }
     .seccion { display: none; }
     .seccion.activa { display: block; }
+
+
+    .solo-admin { }
+
+    body.modo-promotor .solo-admin,
+    body.modo-promotor .tab-admin,
+    body.modo-promotor .campo-admin {
+      display: none !important;
+    }
+
+    body.modo-promotor input:disabled,
+    body.modo-promotor select:disabled,
+    body.modo-promotor textarea:disabled {
+      background: #eee;
+      color: #777;
+      cursor: not-allowed;
+    }
+
     @media (max-width: 800px) { .layout { flex-direction: column; } .sidebar { width: auto; height: auto; position: relative; } }
   </style>
 </head>
@@ -176,8 +194,8 @@
     <button class="tab-btn activo" onclick="mostrarSeccion('colegios', this)">🏫 Colegios</button>
     <button class="tab-btn" onclick="mostrarSeccion('pedidos', this)">📦 Pedidos</button>
     <button class="tab-btn" onclick="mostrarSeccion('inventario', this)">📚 Inventario</button>
-    <button class="tab-btn" onclick="mostrarSeccion('paqueteria', this)">🚚 Paquetería</button>
-    <button class="tab-btn" onclick="mostrarSeccion('empaque', this)">📦 Empaque</button>
+    <button class="tab-btn tab-admin" onclick="mostrarSeccion('paqueteria', this)">🚚 Paquetería</button>
+    <button class="tab-btn tab-admin" onclick="mostrarSeccion('empaque', this)">📦 Empaque</button>
     <button class="tab-btn" onclick="mostrarSeccion('ubicaciones', this)">📍 Ubicaciones</button>
     <button class="tab-btn" onclick="mostrarSeccion('reportes', this)">📊 Reportes</button>
   </aside>
@@ -211,7 +229,7 @@
   oninput="renderColegios(colegiosGlobal)"
   >
 
-  <button onclick="abrirNuevoColegio()">
+  <button class="solo-admin" onclick="abrirNuevoColegio()">
     + Añadir colegio
   </button>
 
@@ -265,11 +283,11 @@
   placeholder="Alias QR del colegio"
   >
 
-  <button onclick="guardarColegio()">
+  <button class="solo-admin" onclick="guardarColegio()">
     Guardar colegio
   </button>
 
-  <button onclick="cerrarNuevoColegio()">
+  <button class="solo-admin" onclick="cerrarNuevoColegio()">
     Cancelar
   </button>
 </div>
@@ -307,7 +325,7 @@
 >
 
 <div id="resultado-txt-pedido"></div>
-  <button onclick="guardarPedido()">Guardar pedido</button>
+  <button class="solo-admin" onclick="guardarPedido()">Guardar pedido</button>
 </div>
   <div id="modal-validacion" class="card" style="display:none;">
   <h2>Validación física de pedido</h2>
@@ -450,8 +468,8 @@
   <div class="card">
     <h2>Inventario</h2>
 
-    <button onclick="abrirNuevoProducto()">+ Producto</button>
-    <button class="btn-secundario" onclick="abrirMovimientoInventario()">+ Entrada inventario</button>
+    <button class="solo-admin" onclick="abrirNuevoProducto()">+ Producto</button>
+    <button class="btn-secundario solo-admin" onclick="abrirMovimientoInventario()">+ Entrada inventario</button>
   </div>
 
   <div id="modal-producto">
@@ -469,8 +487,8 @@
     <input id="prod-stock" type="number" placeholder="Stock inicial">
     <input id="prod-max" type="number" placeholder="Stock máximo / referencia">
 
-    <button onclick="guardarProducto()">Guardar producto</button>
-    <button onclick="cerrarNuevoProducto()">Cancelar</button>
+    <button class="solo-admin" onclick="guardarProducto()">Guardar producto</button>
+    <button class="solo-admin" onclick="cerrarNuevoProducto()">Cancelar</button>
   </div>
 
   <div id="modal-movimiento">
@@ -489,8 +507,8 @@
     <input id="mov-cantidad" type="number" placeholder="Cantidad">
     <input id="mov-nota" placeholder="Nota">
 
-    <button onclick="guardarMovimientoInventario()">Guardar entrada</button>
-    <button onclick="cerrarMovimientoInventario()">Cancelar</button>
+    <button class="solo-admin" onclick="guardarMovimientoInventario()">Guardar entrada</button>
+    <button class="solo-admin" onclick="cerrarMovimientoInventario()">Cancelar</button>
   </div>
   <div class="card">
   <h2>Panel de inventario</h2>
@@ -529,8 +547,8 @@
 
     <input id="paq-fecha" type="date">
 
-    <button onclick="guardarPaquete()">Guardar envío</button>
-    <button onclick="cerrarPaqueteria()">Cancelar</button>
+    <button class="solo-admin" onclick="guardarPaquete()">Guardar envío</button>
+    <button class="solo-admin" onclick="cerrarPaqueteria()">Cancelar</button>
   </div>
   <div class="card">
   <h2>Relación de cajas</h2>
@@ -549,7 +567,7 @@
   <div id="resumen-qr-caja"></div>
   <div id="lista-pedidos-caja-temporal"></div>
 
-  <button onclick="agregarPedidoACaja()">
+  <button class="solo-admin" onclick="agregarPedidoACaja()">
    Agregar a lista
    </button>
 
@@ -561,6 +579,7 @@
   </button>
 
   <button
+    class="solo-admin"
     style="
       background:#d94f2b;
       color:white;
@@ -595,11 +614,11 @@
     <strong id="total-paqueteria">0</strong>
   </p>
 
-  <button onclick="registrarLotePaqueteria()">
+  <button class="solo-admin" onclick="registrarLotePaqueteria()">
     Registrar en paquetería
   </button>
 
-  <button class="btn-secundario" onclick="limpiarLotePaqueteria()">
+  <button class="btn-secundario solo-admin" onclick="limpiarLotePaqueteria()">
     Limpiar lista
   </button>
 
@@ -627,11 +646,11 @@
 
     <div id="lista-empaque-temporal"></div>
 
-    <button onclick="registrarLoteEmpaqueHTML()">
+    <button class="solo-admin" onclick="registrarLoteEmpaqueHTML()">
       Registrar lote de empaque
     </button>
 
-    <button class="btn-secundario" onclick="limpiarEmpaqueTemporal()">
+    <button class="btn-secundario solo-admin" onclick="limpiarEmpaqueTemporal()">
       Limpiar lista
     </button>
   </div>
@@ -661,7 +680,7 @@
   Descargar faltantes
 </button>
 
-<button class="btn-secundario" onclick="repararFaltantesIncompletos()">
+<button class="btn-secundario solo-admin" onclick="repararFaltantesIncompletos()">
   Reparar faltantes incompletos
 </button>
 
@@ -840,6 +859,12 @@ function renderColegios(colegios) {
 
   contenedor.innerHTML = colegios.map(item => {
     const nombre = item.colegio || "";
+
+    if (rolActual === "promotor" && colegioUsuarioActual && colegioUsuarioActual !== "TODOS") {
+      if (normalizarTexto(nombre) !== normalizarTexto(colegioUsuarioActual)) {
+        return "";
+      }
+    }
     const periodo = item.periodoVenta || "";
     const promotor = item.promotor || "";
     const cuenta = item.cuenta || "";
@@ -877,8 +902,8 @@ function renderColegios(colegios) {
         <p><strong>Periodo:</strong><br>${periodo}</p>
         <p><strong>Promotor:</strong><br>${promotor}</p>
         <p><strong>Cuenta:</strong><br>${cuenta}</p>
-        <p><strong>Usuario:</strong><br>${usuario}</p>
-        <p><strong>Password:</strong><br>${password}</p>
+        ${rolActual !== "promotor" ? `<p><strong>Usuario:</strong><br>${usuario}</p>` : ""}
+        ${rolActual !== "promotor" ? `<p><strong>Password:</strong><br>${password}</p>` : ""}
         <p><strong>Tipo de envío:</strong><br>${tipoEnvio}</p>
 
        ${
@@ -892,7 +917,7 @@ function renderColegios(colegios) {
 </button>
 
 <button
-  class="btn-secundario"
+  class="btn-secundario solo-admin"
   onclick='editarColegio(${JSON.stringify(nombre)})'
 >
   Editar
@@ -911,6 +936,13 @@ ${
 }
 
 function seleccionarColegio(nombre) {
+  if (rolActual === "promotor" && colegioUsuarioActual && colegioUsuarioActual !== "TODOS") {
+    if (normalizarTexto(nombre) !== normalizarTexto(colegioUsuarioActual)) {
+      alert("Tu usuario solo puede consultar el colegio: " + colegioUsuarioActual);
+      return;
+    }
+  }
+
   colegioActivo = nombre;
 
   document.getElementById("colegio-activo-label").innerHTML =
@@ -955,6 +987,11 @@ function limpiarFiltroGlobal() {
 }
 
 function abrirNuevoColegio() {
+  if (rolActual === "promotor") {
+    alert("Tu usuario es de consulta. No puedes crear colegios.");
+    return;
+  }
+
   const modal = document.getElementById("modal-colegio");
   modal.style.display = "block";
 
@@ -965,6 +1002,11 @@ function abrirNuevoColegio() {
 }
 
 function editarColegio(nombre) {
+  if (rolActual === "promotor") {
+    alert("Tu usuario es de consulta. No puedes editar colegios.");
+    return;
+  }
+
   const colegio = colegiosGlobal.find(item =>
     normalizarTexto(item.colegio || "") === normalizarTexto(nombre)
   );
@@ -1253,23 +1295,23 @@ async function buscarSurtidor() {
       Checador:
       <strong>${checador}</strong><br><br>
 
-      <button class="btn-secundario" onclick="abrirSurtirPedido('${id}')">
+      <button class="btn-secundario solo-admin" onclick="abrirSurtirPedido('${id}')">
         👷 Surtir pedido
       </button>
 
-      <button class="btn-secundario" onclick="validarAccesoValidacion('${id}')">
+      <button class="btn-secundario solo-admin" onclick="validarAccesoValidacion('${id}')">
         🔎 Revisión
       </button>
 
-      <button class="btn-secundario" onclick="editarLibrosPedido('${id}')">
+      <button class="btn-secundario solo-admin" onclick="editarLibrosPedido('${id}')">
         ✏️ Editar libros
       </button>
 
-      <button class="btn-secundario" onclick="generarPapeleta('${id}')">
+      <button class="btn-secundario solo-admin" onclick="generarPapeleta('${id}')">
         🧾 Generar papeleta
       </button>
 
-      <button class="btn-secundario" onclick="abrirModalGuia('${id}')">
+      <button class="btn-secundario solo-admin" onclick="abrirModalGuia('${id}')">
         📎 Cargar guía
       </button>
 
@@ -1286,7 +1328,7 @@ async function buscarSurtidor() {
        : ""
     }
 
-      <button onclick="marcarIncompleto('${id}')">
+      <button class="solo-admin" onclick="marcarIncompleto('${id}')">
         ✗ Incompleto
       </button>
     `;
@@ -4805,18 +4847,118 @@ function abrirValidacionFisica(id) {
   function aplicarPermisosUsuario() {
   if (rolActual !== "promotor") return;
 
+  document.body.classList.add("modo-promotor");
+
+  const colegioHeader = document.getElementById("colegio-header");
+  if (colegioHeader) {
+    colegioHeader.innerHTML = `🏫 Modo promotor: solo consulta — ${colegioUsuarioActual}`;
+  }
+
+  // El promotor solo trabaja con su colegio.
+  if (colegioUsuarioActual && colegioUsuarioActual !== "TODOS") {
+    colegioActivo = colegioUsuarioActual;
+
+    const label = document.getElementById("colegio-activo-label");
+    if (label) {
+      label.innerHTML = `<strong>Colegio activo:</strong> ${colegioUsuarioActual}`;
+    }
+  }
+
+  // Ocultar pestañas operativas.
+  document.querySelectorAll(".tab-admin").forEach(el => {
+    el.style.display = "none";
+  });
+
+  // Ocultar cualquier botón marcado como solo administrador.
+  document.querySelectorAll(".solo-admin").forEach(el => {
+    el.style.display = "none";
+  });
+
+  bloquearCamposPromotor();
+  ocultarAccionesPromotor();
+
+  renderColegios(colegiosGlobal);
+  cargarPedidos();
+  cargarInventario();
+  cargarAlertasFaltantes();
+  cargarCajas();
+
+  // Vigila botones que se generan dinámicamente, como los de pedidos.
+  const observer = new MutationObserver(() => {
+    ocultarAccionesPromotor();
+    bloquearCamposPromotor();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+function bloquearCamposPromotor() {
+  if (rolActual !== "promotor") return;
+
+  const camposPermitidos = [
+    "buscar-colegio",
+    "buscar-pedido",
+    "buscar-ubicacion-pedido"
+  ];
+
+  document.querySelectorAll("input, select, textarea").forEach(campo => {
+    if (campo.closest("#login-modal")) return;
+
+    if (camposPermitidos.includes(campo.id)) {
+      campo.disabled = false;
+    } else {
+      campo.disabled = true;
+    }
+  });
+}
+
+function ocultarAccionesPromotor() {
+  if (rolActual !== "promotor") return;
+
+  const accionesBloqueadas = [
+    "abrirNuevoColegio",
+    "editarColegio",
+    "guardarColegio",
+    "guardarPedido",
+    "abrirSurtirPedido",
+    "validarAccesoValidacion",
+    "editarLibrosPedido",
+    "generarPapeleta",
+    "abrirModalGuia",
+    "marcarIncompleto",
+    "marcarCompleto",
+    "guardarFaltantesSeleccionados",
+    "guardarLibrosEditados",
+    "confirmarSurtidorPedido",
+    "subirGuiaPedidoHTML",
+    "confirmarUbicacionActual",
+    "buscarOtraUbicacion",
+    "cancelarUbicacionSinMarcar",
+    "abrirNuevoProducto",
+    "abrirMovimientoInventario",
+    "guardarProducto",
+    "guardarMovimientoInventario",
+    "guardarPaquete",
+    "agregarPedidoACaja",
+    "registrarListaCaja",
+    "retirarPedidoCaja",
+    "cerrarLoteCajas",
+    "registrarLotePaqueteria",
+    "limpiarLotePaqueteria",
+    "registrarLoteEmpaqueHTML",
+    "limpiarEmpaqueTemporal",
+    "repararFaltantesIncompletos"
+  ];
+
   document.querySelectorAll("button").forEach(btn => {
-    const texto = btn.innerText.toLowerCase();
+    const accion = btn.getAttribute("onclick") || "";
 
-    const permitido =
-      texto.includes("ver") ||
-      texto.includes("ocultar") ||
-      texto.includes("actualizar") ||
-      texto.includes("descargar") ||
-      texto.includes("reporte") ||
-      texto.includes("buscar");
+    if (btn.closest("#login-modal")) return;
 
-    if (!permitido) {
+    if (accionesBloqueadas.some(nombre => accion.includes(nombre))) {
       btn.style.display = "none";
     }
   });
