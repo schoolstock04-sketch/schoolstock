@@ -4977,6 +4977,149 @@ function ocultarAccionesPromotor() {
     }
   });
 }
+
+  function leerBusquedaEmpaquePedido(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+  buscarEmpaquePorPedido();
+}
+
+  function leerBusquedaEmpaqueEmpleado(event) {
+  if (event.key !== "Enter") return;
+
+  event.preventDefault();
+  buscarEmpaquePorEmpleado();
+}
+
+  async function buscarEmpaquePorPedido() {
+  const input = document.getElementById("buscar-empaque-pedido");
+  const resultado = document.getElementById("resultado-busqueda-empaque");
+
+  let texto = input.value.trim();
+
+  if (!texto) {
+    alert("Escanea o escribe un número de pedido.");
+    return;
+  }
+
+  const partes = texto.split("+");
+  const pedidoBuscado = String(partes[0] || texto).trim();
+
+  try {
+    resultado.innerHTML = "<p>Buscando empaque...</p>";
+
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empaque`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
+
+    const encontrados = filas.filter(fila =>
+      String(fila[0] || "").trim() === pedidoBuscado
+    );
+
+    if (encontrados.length === 0) {
+      resultado.innerHTML = `
+        <p style="color:red;">
+          No se encontró registro de empaque para el pedido ${pedidoBuscado}.
+        </p>
+      `;
+      return;
+    }
+
+    resultado.innerHTML = `
+      <h3>Resultado por pedido</h3>
+      ${encontrados.map(fila => `
+        <div class="card">
+          <p><strong>Pedido:</strong> ${fila[0]}</p>
+          <p><strong>Colegio:</strong> ${fila[1]}</p>
+          <p><strong>Alumno:</strong> ${fila[2]}</p>
+          <p><strong>Grado:</strong> ${fila[3]}</p>
+          <p><strong>Empacador No.:</strong> ${fila[4]}</p>
+          <p><strong>Empacador:</strong> ${fila[5]}</p>
+          <p><strong>Fecha:</strong> ${fila[6] || ""}</p>
+          <p><strong>Hora:</strong> ${fila[7] || ""}</p>
+        </div>
+      `).join("")}
+    `;
+
+    input.value = "";
+    input.focus();
+
+  } catch (error) {
+    console.error(error);
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al buscar registro de empaque.
+      </p>
+    `;
+  }
+}
+
+  async function buscarEmpaquePorEmpleado() {
+  const input = document.getElementById("buscar-empaque-empleado");
+  const resultado = document.getElementById("resultado-busqueda-empaque");
+
+  const empleadoBuscado = input.value.trim();
+
+  if (!empleadoBuscado) {
+    alert("Escanea o escribe un número de empleado.");
+    return;
+  }
+
+  try {
+    resultado.innerHTML = "<p>Buscando pedidos empacados...</p>";
+
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empaque`);
+    const datos = await respuesta.json();
+    const filas = datos.slice(1);
+
+    const encontrados = filas.filter(fila =>
+      String(fila[4] || "").trim() === String(empleadoBuscado)
+    );
+
+    if (encontrados.length === 0) {
+      resultado.innerHTML = `
+        <p style="color:red;">
+          No se encontraron pedidos empacados por el empleado ${empleadoBuscado}.
+        </p>
+      `;
+      return;
+    }
+
+    resultado.innerHTML = `
+      <h3>Pedidos empacados por empleado ${empleadoBuscado}</h3>
+      <p><strong>Total:</strong> ${encontrados.length}</p>
+
+      ${encontrados.map(fila => `
+        <div style="
+          border:1px solid #ddd;
+          border-radius:10px;
+          padding:10px;
+          margin-bottom:8px;
+          background:white;
+        ">
+          <strong>#${fila[0]}</strong><br>
+          Alumno: ${fila[2]}<br>
+          Grado: ${fila[3]}<br>
+          Colegio: ${fila[1]}<br>
+          Empacador: ${fila[5]}<br>
+          Fecha: ${fila[6] || ""} ${fila[7] || ""}
+        </div>
+      `).join("")}
+    `;
+
+    input.value = "";
+    input.focus();
+
+  } catch (error) {
+    console.error(error);
+    resultado.innerHTML = `
+      <p style="color:red;">
+        Error al buscar pedidos del empleado.
+      </p>
+    `;
+  }
+}
   
     function normalizarTexto(texto) {
       return String(texto)
