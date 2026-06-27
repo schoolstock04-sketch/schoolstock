@@ -860,11 +860,6 @@ function renderColegios(colegios) {
   contenedor.innerHTML = colegios.map(item => {
     const nombre = item.colegio || "";
 
-    if (rolActual === "promotor" && colegioUsuarioActual && colegioUsuarioActual !== "TODOS") {
-      if (normalizarTexto(nombre) !== normalizarTexto(colegioUsuarioActual)) {
-        return "";
-      }
-    }
     const periodo = item.periodoVenta || "";
     const promotor = item.promotor || "";
     const cuenta = item.cuenta || "";
@@ -936,13 +931,6 @@ ${
 }
 
 function seleccionarColegio(nombre) {
-  if (rolActual === "promotor" && colegioUsuarioActual && colegioUsuarioActual !== "TODOS") {
-    if (normalizarTexto(nombre) !== normalizarTexto(colegioUsuarioActual)) {
-      alert("Tu usuario solo puede consultar el colegio: " + colegioUsuarioActual);
-      return;
-    }
-  }
-
   colegioActivo = nombre;
 
   document.getElementById("colegio-activo-label").innerHTML =
@@ -4832,7 +4820,7 @@ function abrirValidacionFisica(id) {
   else if (usuario === "promotor" && password === "1234") {
     usuarioActual = "promotor";
     rolActual = "promotor";
-    colegioUsuarioActual = "COLEGIO JUAN MCGREGOR";
+    colegioUsuarioActual = "";
   }
   else {
     error.innerHTML = `<p style="color:red;">Usuario o contraseña incorrectos.</p>`;
@@ -4851,17 +4839,16 @@ function abrirValidacionFisica(id) {
 
   const colegioHeader = document.getElementById("colegio-header");
   if (colegioHeader) {
-    colegioHeader.innerHTML = `🏫 Modo promotor: solo consulta — ${colegioUsuarioActual}`;
+    colegioHeader.innerHTML = "🏫 Modo promotor: solo consulta. Selecciona el colegio que deseas revisar.";
   }
 
-  // El promotor solo trabaja con su colegio.
-  if (colegioUsuarioActual && colegioUsuarioActual !== "TODOS") {
-    colegioActivo = colegioUsuarioActual;
+  // En modo promotor NO se asigna colegio automático.
+  // El promotor puede buscar y seleccionar el colegio desde la sección Colegios.
+  colegioActivo = "";
 
-    const label = document.getElementById("colegio-activo-label");
-    if (label) {
-      label.innerHTML = `<strong>Colegio activo:</strong> ${colegioUsuarioActual}`;
-    }
+  const label = document.getElementById("colegio-activo-label");
+  if (label) {
+    label.innerHTML = "Ningún colegio seleccionado";
   }
 
   // Ocultar pestañas operativas.
