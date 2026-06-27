@@ -654,6 +654,33 @@
       Limpiar lista
     </button>
   </div>
+      <div class="card">
+  <h2>🔎 Consulta de empaque</h2>
+
+  <input
+    id="buscar-empaque-pedido"
+    placeholder="Escanea QR o número de pedido"
+    onkeydown="leerBusquedaEmpaquePedido(event)"
+  >
+
+  <button class="btn-secundario" onclick="buscarEmpaquePorPedido()">
+    Buscar por pedido
+  </button>
+
+  <hr>
+
+  <input
+    id="buscar-empaque-empleado"
+    placeholder="Escanea número de empleado"
+    onkeydown="leerBusquedaEmpaqueEmpleado(event)"
+  >
+
+  <button class="btn-secundario" onclick="buscarEmpaquePorEmpleado()">
+    Buscar por empleado
+  </button>
+
+  <div id="resultado-busqueda-empaque"></div>
+</div>
 </section>
 
     <section id="seccion-ubicaciones" class="seccion">
