@@ -219,17 +219,34 @@
       <p id="estado">Conectando...</p>
     </div>
 
-    <div id="colegio-header" style="
+   <div id="colegio-header" style="
   margin-top:10px;
   margin-bottom:20px;
-  padding:12px;
+  padding:12px 18px;
   background:#effaf3;
   border-left:5px solid #2a8a56;
   border-radius:8px;
   font-size:18px;
   font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
 ">
-  🏫 Ningún colegio seleccionado
+  <span id="colegio-header-texto">
+    🏫 Ningún colegio seleccionado
+  </span>
+
+  <img
+    id="logo-colegio"
+    src=""
+    style="
+      max-height:70px;
+      max-width:180px;
+      object-fit:contain;
+      display:none;
+    "
+  >
 </div>
 
     <section id="seccion-colegios" class="seccion activa">
