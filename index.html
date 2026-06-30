@@ -1011,13 +1011,38 @@ function seleccionarColegio(nombre) {
 
   function actualizarEncabezadoColegio() {
   const header = document.getElementById("colegio-header");
+  const contenedorLogo = document.getElementById("contenedor-logo-colegio");
+  const imgLogo = document.getElementById("logo-colegio");
 
   if (!header) return;
 
-  if (colegioActivo) {
-    header.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
-  } else {
+  if (!colegioActivo) {
     header.innerHTML = "🏫 Ningún colegio seleccionado";
+
+    if (contenedorLogo) contenedorLogo.style.display = "none";
+    if (imgLogo) imgLogo.src = "";
+
+    return;
+  }
+
+  header.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
+
+  const colegio = colegiosGlobal.find(item =>
+    normalizarTexto(item.colegio || "") === normalizarTexto(colegioActivo)
+  );
+
+  const logoId = colegio ? String(colegio.logo || "").trim() : "";
+
+  if (logoId && contenedorLogo && imgLogo) {
+    imgLogo.src =
+      "https://drive.google.com/thumbnail?id=" +
+      encodeURIComponent(logoId) +
+      "&sz=w600";
+
+    contenedorLogo.style.display = "block";
+  } else {
+    if (contenedorLogo) contenedorLogo.style.display = "none";
+    if (imgLogo) imgLogo.src = "";
   }
 }
 
