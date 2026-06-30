@@ -1007,22 +1007,23 @@ function seleccionarColegio(nombre) {
 }
 
   function actualizarEncabezadoColegio() {
-  const header = document.getElementById("colegio-header");
-  const contenedorLogo = document.getElementById("contenedor-logo-colegio");
+  const texto = document.getElementById("colegio-header-texto");
   const imgLogo = document.getElementById("logo-colegio");
 
-  if (!header) return;
+  if (!texto) return;
 
   if (!colegioActivo) {
-    header.innerHTML = "🏫 Ningún colegio seleccionado";
+    texto.innerHTML = "🏫 Ningún colegio seleccionado";
 
-    if (contenedorLogo) contenedorLogo.style.display = "none";
-    if (imgLogo) imgLogo.src = "";
+    if (imgLogo) {
+      imgLogo.src = "";
+      imgLogo.style.display = "none";
+    }
 
     return;
   }
 
-  header.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
+  texto.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
 
   const colegio = colegiosGlobal.find(item =>
     normalizarTexto(item.colegio || "") === normalizarTexto(colegioActivo)
@@ -1030,16 +1031,16 @@ function seleccionarColegio(nombre) {
 
   const logoId = colegio ? String(colegio.logo || "").trim() : "";
 
-  if (logoId && contenedorLogo && imgLogo) {
+  if (logoId && imgLogo) {
     imgLogo.src =
       "https://drive.google.com/thumbnail?id=" +
       encodeURIComponent(logoId) +
       "&sz=w600";
 
-    contenedorLogo.style.display = "flex";
-  } else {
-    if (contenedorLogo) contenedorLogo.style.display = "none";
-    if (imgLogo) imgLogo.src = "";
+    imgLogo.style.display = "block";
+  } else if (imgLogo) {
+    imgLogo.src = "";
+    imgLogo.style.display = "none";
   }
 }
 
