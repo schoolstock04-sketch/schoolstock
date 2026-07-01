@@ -438,6 +438,34 @@
   </button>
 </div>
 
+      <div id="modal-vale" class="card" style="display:none;">
+  <h2>Enviar pedido con vale</h2>
+
+  <div id="info-vale"></div>
+
+  <input
+    id="numero-vale"
+    placeholder="Número de vale"
+  >
+
+  <label style="display:block; margin-top:10px;">
+    <input
+      type="checkbox"
+      id="confirmar-vale"
+      style="width:auto;"
+    >
+    Confirmo que el pedido fue revisado físicamente.
+  </label>
+
+  <button onclick="confirmarEnvioConVale()">
+    Confirmar envío con vale
+  </button>
+
+  <button class="btn-secundario" onclick="cerrarModalVale()">
+    Cancelar
+  </button>
+</div>
+
       <div id="modal-guia" class="card" style="display:none;">
   <h2>Cargar guía de envío</h2>
 
