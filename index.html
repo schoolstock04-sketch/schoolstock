@@ -1273,33 +1273,21 @@ async function buscarSurtidor() {
   lista.innerHTML = "";
 
   if (!colegioActivo) {
-    lista.innerHTML = `
-      <p>Selecciona un colegio para ver pedidos.</p>
-    `;
-
+    lista.innerHTML = `<p>Selecciona un colegio para ver pedidos.</p>`;
     if (kpis) kpis.innerHTML = "";
     return;
   }
 
-  const texto = document
-    .getElementById("buscar-pedido")
-    .value
-    .trim();
+  const texto = document.getElementById("buscar-pedido").value.trim();
 
-  const pedidosColegio = pedidosGlobal.filter(fila => {
-    const colegioPedido = String(fila[3] || "");
+  const pedidosColegio = pedidosGlobal.filter(fila =>
+    normalizarTexto(String(fila[3] || "")) === normalizarTexto(colegioActivo)
+  );
 
-    return (
-      normalizarTexto(colegioPedido) ===
-      normalizarTexto(colegioActivo)
-    );
-  });
-
-  const contarEstado = estado => {
-    return pedidosColegio.filter(fila =>
+  const contarEstado = estado =>
+    pedidosColegio.filter(fila =>
       normalizarTexto(fila[6] || "pendiente") === normalizarTexto(estado)
     ).length;
-  };
 
   const total = pedidosColegio.length;
   const pendientes = contarEstado("pendiente");
@@ -1313,17 +1301,14 @@ async function buscarSurtidor() {
           <h3 style="color:#2b6dd9;">${total}</h3>
           <p>Todos</p>
         </div>
-
         <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('pendiente')">
           <h3 style="color:#d48b00;">${pendientes}</h3>
           <p>Pendientes</p>
         </div>
-
         <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('incompleto')">
           <h3 style="color:#d94f2b;">${incompletos}</h3>
           <p>Incompletos</p>
         </div>
-
         <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('completo')">
           <h3 style="color:green;">${completos}</h3>
           <p>Completos</p>
@@ -1335,15 +1320,12 @@ async function buscarSurtidor() {
   pedidosFiltrados = pedidosColegio.filter(fila => {
     const idPedido = String(fila[0]);
     const status = normalizarTexto(fila[6] || "pendiente");
-
-    const coincideTexto =
-      !texto || idPedido.includes(texto);
+    const coincideTexto = !texto || idPedido.includes(texto);
 
     let coincideEstado = true;
 
     if (filtroEstadoPedidos !== "todos") {
-      coincideEstado =
-        status === normalizarTexto(filtroEstadoPedidos);
+      coincideEstado = status === normalizarTexto(filtroEstadoPedidos);
     }
 
     return coincideTexto && coincideEstado;
@@ -1363,7 +1345,8 @@ async function buscarSurtidor() {
     const surtidor = fila[9] || "Sin asignar";
     const checador = fila[11] || "Sin asignar";
     const guiaURL = fila[13] || "";
-    const guiaNombre = fila[14] || "";
+
+    const vale = fila[17] || "";
 
     pedido.innerHTML = `
       <strong>#${id}</strong><br>
@@ -1392,6 +1375,16 @@ async function buscarSurtidor() {
       Estado:
       <span class="status">${status}</span><br>
 
+      ${
+        vale
+          ? `
+            <p style="color:#b8860b; font-weight:bold;">
+              📄 Vale: ${vale}
+            </p>
+          `
+          : ""
+      }
+
       Surtidor:
       <strong>${surtidor}</strong><br>
 
@@ -1418,18 +1411,32 @@ async function buscarSurtidor() {
         📎 Cargar guía
       </button>
 
-     ${
+      ${
+        normalizarTexto(status) === "incompleto" && !vale
+          ? `
+            <button
+              class="btn-secundario solo-admin"
+              style="background:#b8860b;"
+              onclick="abrirModalVale('${id}')"
+            >
+              📄 Enviar con vale
+            </button>
+          `
+          : ""
+      }
+
+      ${
         guiaURL
-            ? `
-           <button
+          ? `
+            <button
               class="btn-secundario"
-            onclick="window.open('${guiaURL}','_blank')"
-          >
-            👁 Ver guía
-           </button>
-         `
-       : ""
-    }
+              onclick="window.open('${guiaURL}','_blank')"
+            >
+              👁 Ver guía
+            </button>
+          `
+          : ""
+      }
 
       <button class="solo-admin" onclick="marcarIncompleto('${id}')">
         ✗ Incompleto
@@ -1440,9 +1447,7 @@ async function buscarSurtidor() {
   });
 
   if (pedidosFiltrados.length === 0) {
-    lista.innerHTML = `
-      <p>No se encontraron pedidos con ese filtro.</p>
-    `;
+    lista.innerHTML = `<p>No se encontraron pedidos con ese filtro.</p>`;
   }
 }
   
