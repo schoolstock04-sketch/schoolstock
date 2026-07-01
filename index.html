@@ -843,6 +843,7 @@
     let usuarioActual = "";
     let rolActual = "";
     let colegioUsuarioActual = "";
+    let pedidoValeActual = null;
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
@@ -5235,6 +5236,109 @@ function ocultarAccionesPromotor() {
     console.error(error);
     alert("No se pudo generar el reporte de rendimiento.");
   }
+}
+
+  function abrirModalVale(id) {
+
+  const pedido = pedidosGlobal.find(
+    fila => String(fila[0]) === String(id)
+  );
+
+  if (!pedido) {
+    alert("Pedido no encontrado.");
+    return;
+  }
+
+  pedidoValeActual = pedido;
+
+  document.getElementById("numero-vale").value = "";
+  document.getElementById("confirmar-vale").checked = false;
+
+  document.getElementById("info-vale").innerHTML = `
+    <p><strong>Pedido:</strong> ${pedido[0]}</p>
+    <p><strong>Alumno:</strong> ${pedido[1]}</p>
+    <p><strong>Grado:</strong> ${pedido[2]}</p>
+  `;
+
+  document.getElementById("modal-vale").style.display = "block";
+
+}
+
+  function cerrarModalVale() {
+
+  pedidoValeActual = null;
+
+  document.getElementById("modal-vale").style.display = "none";
+
+}
+
+  async function confirmarEnvioConVale() {
+
+  if (!pedidoValeActual) return;
+
+  const vale = document
+    .getElementById("numero-vale")
+    .value
+    .trim();
+
+  if (!vale) {
+    alert("Captura el número de vale.");
+    return;
+  }
+
+  if (!document.getElementById("confirmar-vale").checked) {
+    alert("Debes confirmar que el pedido fue revisado físicamente.");
+    return;
+  }
+
+  try {
+
+    const respuesta = await fetch(SCRIPT_URL, {
+
+      method:"POST",
+
+      body:JSON.stringify({
+
+        accion:"enviarConVale",
+
+        id:pedidoValeActual[0],
+
+        vale:vale
+
+      })
+
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+
+      alert(resultado.error);
+
+      return;
+
+    }
+
+    alert("Pedido enviado con vale correctamente.");
+
+    cerrarModalVale();
+
+    cargarPedidos();
+
+    cargarInventario();
+
+    cargarAlertasFaltantes();
+
+  }
+
+  catch(error) {
+
+    console.error(error);
+
+    alert("No se pudo registrar el vale.");
+
+  }
+
 }
   
     function normalizarTexto(texto) {
