@@ -3868,6 +3868,23 @@ function abrirValidacionFisica(id) {
       ? String(pedidoValidando[3] || "").trim()
       : "";
 
+    const codigosExpandidos = expandirCodigoPaquete(codigo);
+
+    if (codigosExpandidos.length > 1) {
+      codigosExpandidos.forEach(codigoItem => {
+        codigosEscaneadosValidacion.push(codigoItem);
+      });
+
+      document.getElementById("resultado-validacion").innerHTML = `
+        <p style="color:green;">
+          Paquete detectado. Se agregaron ${codigosExpandidos.length} artículos.
+        </p>
+      `;
+
+      renderValidacionFisica();
+      return;
+    }
+
     let libro = await obtenerArticuloParaPedido(codigo, colegio);
 
     if (!libro || !libro.codigo_gonvill) {
