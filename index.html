@@ -3792,10 +3792,14 @@ function abrirValidacionFisica(id) {
     return;
   }
 
-  const codigos = String(pedido[7] || "")
-    .split("/")
-    .map(c => String(c).trim().padStart(8, "0"))
-    .filter(Boolean);
+  const codigosOriginales = String(pedido[7] || "")
+  .split("/")
+  .map(c => String(c).trim().padStart(8, "0"))
+  .filter(Boolean);
+
+   const codigos = codigosOriginales.flatMap(codigo =>
+  expandirCodigoPaquete(codigo)
+  );
 
   if (codigos.length === 0) {
     alert("Este pedido no tiene códigos Gonvill guardados.");
