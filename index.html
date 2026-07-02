@@ -5267,6 +5267,17 @@ function ocultarAccionesPromotor() {
 
   document.getElementById("modal-vale").style.display = "block";
 
+    const modal = document.getElementById("modal-vale");
+
+modal.style.display = "block";
+
+modal.scrollIntoView({
+  behavior: "smooth",
+  block: "center"
+});
+
+document.getElementById("numero-vale").focus();
+
 }
 
   function cerrarModalVale() {
