@@ -842,6 +842,7 @@
     let empleadosGlobal = [];
     let usuarioActual = "";
     let rolActual = "";
+    let paquetesGlobal = [];
     let colegioUsuarioActual = "";
     let pedidoValeActual = null;
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
@@ -5356,6 +5357,26 @@ document.getElementById("numero-vale").focus();
   }
 
 }
+
+  async function cargarPaquetes() {
+  try {
+    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Paquetes`);
+    const datos = await respuesta.json();
+
+    paquetesGlobal = datos.slice(1).map(fila => ({
+      codigoPaquete: String(fila[0] || "").trim().padStart(8, "0"),
+      codigoContenido: String(fila[1] || "").trim().padStart(8, "0"),
+      descripcion: String(fila[2] || "").trim(),
+      cantidad: Number(fila[3]) || 1
+    }));
+
+    console.log("Paquetes cargados:", paquetesGlobal);
+
+  } catch (error) {
+    console.error("Error cargando paquetes:", error);
+    paquetesGlobal = [];
+  }
+}
   
     function normalizarTexto(texto) {
       return String(texto)
@@ -5425,6 +5446,7 @@ cargarAlertasFaltantes();
     cargarCajas();
     cargarColegios();
     cargarEmpleados();
+    cargarPaquetes();
     actualizarEncabezadoColegio();
   </script>
 
