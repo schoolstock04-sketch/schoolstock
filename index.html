@@ -5377,6 +5377,34 @@ document.getElementById("numero-vale").focus();
     paquetesGlobal = [];
   }
 }
+
+  function expandirCodigoPaquete(codigo) {
+  const codigoNormalizado = String(codigo || "")
+    .trim()
+    .padStart(8, "0");
+
+  const componentes = paquetesGlobal.filter(item =>
+    String(item.codigoPaquete).trim().padStart(8, "0") === codigoNormalizado
+  );
+
+  if (componentes.length === 0) {
+    return [codigoNormalizado];
+  }
+
+  const codigosExpandidos = [];
+
+  componentes.forEach(item => {
+    const cantidad = Number(item.cantidad) || 1;
+
+    for (let i = 0; i < cantidad; i++) {
+      codigosExpandidos.push(
+        String(item.codigoContenido).trim().padStart(8, "0")
+      );
+    }
+  });
+
+  return codigosExpandidos;
+}
   
     function normalizarTexto(texto) {
       return String(texto)
