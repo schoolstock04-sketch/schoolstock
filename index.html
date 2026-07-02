@@ -2241,14 +2241,31 @@ if (codigosExpandidos.length > 1) {
       continue;
     }
 
-    for (let i = 0; i < cantidad; i++) {
-      productos.push(libro.titulo);
-      codigos.push(
-        String(libro.codigo_gonvill || codigo)
-          .trim()
-          .padStart(8, "0")
-      );
-    }
+    const codigosExpandidos = expandirCodigoPaquete(codigo);
+
+if (codigosExpandidos.length > 1) {
+  for (const codigoContenido of codigosExpandidos) {
+    const articuloContenido = await obtenerArticuloParaPedido(
+      codigoContenido,
+      colegio
+    );
+
+    productos.push(
+      articuloContenido?.titulo || codigoContenido
+    );
+
+    codigos.push(codigoContenido);
+  }
+} else {
+  for (let i = 0; i < cantidad; i++) {
+    productos.push(libro.titulo);
+    codigos.push(
+      String(libro.codigo_gonvill || codigo)
+        .trim()
+        .padStart(8, "0")
+    );
+  }
+}
   }
 
   document.getElementById("productos").value = productos.join("/");
