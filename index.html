@@ -149,24 +149,6 @@
     .topbar h1 { margin-top: 0; }
     .seccion { display: none; }
     .seccion.activa { display: block; }
-
-
-    .solo-admin { }
-
-    body.modo-promotor .solo-admin,
-    body.modo-promotor .tab-admin,
-    body.modo-promotor .campo-admin {
-      display: none !important;
-    }
-
-    body.modo-promotor input:disabled,
-    body.modo-promotor select:disabled,
-    body.modo-promotor textarea:disabled {
-      background: #eee;
-      color: #777;
-      cursor: not-allowed;
-    }
-
     @media (max-width: 800px) { .layout { flex-direction: column; } .sidebar { width: auto; height: auto; position: relative; } }
   </style>
 </head>
@@ -184,19 +166,6 @@
     <button onclick="loginUsuario()">Ingresar</button>
 
     <div id="login-error"></div>
-    <div style="
-     margin-top:22px;
-     padding-top:14px;
-     border-top:1px solid #ddd;
-     text-align:center;
-     color:#666;
-     font-size:13px;
-     line-height:1.5;
-     ">
-     <em>En memoria de</em><br>
-     <strong>Owen Pinzón</strong><br>
-     <span>Gracias por formar parte de este equipo.</span>
-   </div>
   </div>
 </div>
 
@@ -207,8 +176,8 @@
     <button class="tab-btn activo" onclick="mostrarSeccion('colegios', this)">🏫 Colegios</button>
     <button class="tab-btn" onclick="mostrarSeccion('pedidos', this)">📦 Pedidos</button>
     <button class="tab-btn" onclick="mostrarSeccion('inventario', this)">📚 Inventario</button>
-    <button class="tab-btn tab-admin" onclick="mostrarSeccion('paqueteria', this)">🚚 Paquetería</button>
-    <button class="tab-btn tab-admin" onclick="mostrarSeccion('empaque', this)">📦 Empaque</button>
+    <button class="tab-btn" onclick="mostrarSeccion('paqueteria', this)">🚚 Paquetería</button>
+    <button class="tab-btn" onclick="mostrarSeccion('empaque', this)">📦 Empaque</button>
     <button class="tab-btn" onclick="mostrarSeccion('ubicaciones', this)">📍 Ubicaciones</button>
     <button class="tab-btn" onclick="mostrarSeccion('reportes', this)">📊 Reportes</button>
   </aside>
@@ -219,34 +188,17 @@
       <p id="estado">Conectando...</p>
     </div>
 
-   <div id="colegio-header" style="
+    <div id="colegio-header" style="
   margin-top:10px;
   margin-bottom:20px;
-  padding:12px 18px;
+  padding:12px;
   background:#effaf3;
   border-left:5px solid #2a8a56;
   border-radius:8px;
   font-size:18px;
   font-weight:bold;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
 ">
-  <span id="colegio-header-texto">
-    🏫 Ningún colegio seleccionado
-  </span>
-
-  <img
-    id="logo-colegio"
-    src=""
-    style="
-      max-height:70px;
-      max-width:180px;
-      object-fit:contain;
-      display:none;
-    "
-  >
+  🏫 Ningún colegio seleccionado
 </div>
 
     <section id="seccion-colegios" class="seccion activa">
@@ -259,7 +211,7 @@
   oninput="renderColegios(colegiosGlobal)"
   >
 
-  <button class="solo-admin" onclick="abrirNuevoColegio()">
+  <button onclick="abrirNuevoColegio()">
     + Añadir colegio
   </button>
 
@@ -313,11 +265,11 @@
   placeholder="Alias QR del colegio"
   >
 
-  <button class="solo-admin" onclick="guardarColegio()">
+  <button onclick="guardarColegio()">
     Guardar colegio
   </button>
 
-  <button class="solo-admin" onclick="cerrarNuevoColegio()">
+  <button onclick="cerrarNuevoColegio()">
     Cancelar
   </button>
 </div>
@@ -355,7 +307,7 @@
 >
 
 <div id="resultado-txt-pedido"></div>
-  <button class="solo-admin" onclick="guardarPedido()">Guardar pedido</button>
+  <button onclick="guardarPedido()">Guardar pedido</button>
 </div>
   <div id="modal-validacion" class="card" style="display:none;">
   <h2>Validación física de pedido</h2>
@@ -438,34 +390,6 @@
   </button>
 </div>
 
-      <div id="modal-vale" class="card" style="display:none;">
-  <h2>Enviar pedido con vale</h2>
-
-  <div id="info-vale"></div>
-
-  <input
-    id="numero-vale"
-    placeholder="Número de vale"
-  >
-
-  <label style="display:block; margin-top:10px;">
-    <input
-      type="checkbox"
-      id="confirmar-vale"
-      style="width:auto;"
-    >
-    Confirmo que el pedido fue revisado físicamente.
-  </label>
-
-  <button onclick="confirmarEnvioConVale()">
-    Confirmar envío con vale
-  </button>
-
-  <button class="btn-secundario" onclick="cerrarModalVale()">
-    Cancelar
-  </button>
-</div>
-
       <div id="modal-guia" class="card" style="display:none;">
   <h2>Cargar guía de envío</h2>
 
@@ -526,8 +450,8 @@
   <div class="card">
     <h2>Inventario</h2>
 
-    <button class="solo-admin" onclick="abrirNuevoProducto()">+ Producto</button>
-    <button class="btn-secundario solo-admin" onclick="abrirMovimientoInventario()">+ Entrada inventario</button>
+    <button onclick="abrirNuevoProducto()">+ Producto</button>
+    <button class="btn-secundario" onclick="abrirMovimientoInventario()">+ Entrada inventario</button>
   </div>
 
   <div id="modal-producto">
@@ -545,8 +469,8 @@
     <input id="prod-stock" type="number" placeholder="Stock inicial">
     <input id="prod-max" type="number" placeholder="Stock máximo / referencia">
 
-    <button class="solo-admin" onclick="guardarProducto()">Guardar producto</button>
-    <button class="solo-admin" onclick="cerrarNuevoProducto()">Cancelar</button>
+    <button onclick="guardarProducto()">Guardar producto</button>
+    <button onclick="cerrarNuevoProducto()">Cancelar</button>
   </div>
 
   <div id="modal-movimiento">
@@ -565,8 +489,8 @@
     <input id="mov-cantidad" type="number" placeholder="Cantidad">
     <input id="mov-nota" placeholder="Nota">
 
-    <button class="solo-admin" onclick="guardarMovimientoInventario()">Guardar entrada</button>
-    <button class="solo-admin" onclick="cerrarMovimientoInventario()">Cancelar</button>
+    <button onclick="guardarMovimientoInventario()">Guardar entrada</button>
+    <button onclick="cerrarMovimientoInventario()">Cancelar</button>
   </div>
   <div class="card">
   <h2>Panel de inventario</h2>
@@ -605,8 +529,8 @@
 
     <input id="paq-fecha" type="date">
 
-    <button class="solo-admin" onclick="guardarPaquete()">Guardar envío</button>
-    <button class="solo-admin" onclick="cerrarPaqueteria()">Cancelar</button>
+    <button onclick="guardarPaquete()">Guardar envío</button>
+    <button onclick="cerrarPaqueteria()">Cancelar</button>
   </div>
   <div class="card">
   <h2>Relación de cajas</h2>
@@ -625,7 +549,7 @@
   <div id="resumen-qr-caja"></div>
   <div id="lista-pedidos-caja-temporal"></div>
 
-  <button class="solo-admin" onclick="agregarPedidoACaja()">
+  <button onclick="agregarPedidoACaja()">
    Agregar a lista
    </button>
 
@@ -637,7 +561,6 @@
   </button>
 
   <button
-    class="solo-admin"
     style="
       background:#d94f2b;
       color:white;
@@ -672,11 +595,11 @@
     <strong id="total-paqueteria">0</strong>
   </p>
 
-  <button class="solo-admin" onclick="registrarLotePaqueteria()">
+  <button onclick="registrarLotePaqueteria()">
     Registrar en paquetería
   </button>
 
-  <button class="btn-secundario solo-admin" onclick="limpiarLotePaqueteria()">
+  <button class="btn-secundario" onclick="limpiarLotePaqueteria()">
     Limpiar lista
   </button>
 
@@ -704,44 +627,14 @@
 
     <div id="lista-empaque-temporal"></div>
 
-    <button class="solo-admin" onclick="registrarLoteEmpaqueHTML()">
+    <button onclick="registrarLoteEmpaqueHTML()">
       Registrar lote de empaque
     </button>
 
-    <button class="btn-secundario solo-admin" onclick="limpiarEmpaqueTemporal()">
+    <button class="btn-secundario" onclick="limpiarEmpaqueTemporal()">
       Limpiar lista
     </button>
   </div>
-      <div class="card">
-  <h2>🔎 Consulta de empaque</h2>
-
-  <input
-    id="buscar-empaque-pedido"
-    placeholder="Escanea QR o número de pedido"
-    onkeydown="leerBusquedaEmpaquePedido(event)"
-  >
-
-  <button class="btn-secundario" onclick="buscarEmpaquePorPedido()">
-    Buscar por pedido
-  </button>
-
-  <hr>
-
-  <input
-    id="buscar-empaque-empleado"
-    placeholder="Escanea número de empleado"
-    onkeydown="leerBusquedaEmpaqueEmpleado(event)"
-  >
-
-  <button class="btn-secundario" onclick="buscarEmpaquePorEmpleado()">
-    Buscar por empleado
-  </button>
-
-  <div id="resultado-busqueda-empaque"></div>
-</div>
-      <button class="btn-secundario" onclick="generarReporteRendimientoEmpaqueHTML()">
-  📊 Reporte rendimiento empaque
-</button>
 </section>
 
     <section id="seccion-ubicaciones" class="seccion">
@@ -768,7 +661,7 @@
   Descargar faltantes
 </button>
 
-<button class="btn-secundario solo-admin" onclick="repararFaltantesIncompletos()">
+<button class="btn-secundario" onclick="repararFaltantesIncompletos()">
   Reparar faltantes incompletos
 </button>
 
@@ -842,9 +735,7 @@
     let empleadosGlobal = [];
     let usuarioActual = "";
     let rolActual = "";
-    let paquetesGlobal = [];
     let colegioUsuarioActual = "";
-    let pedidoValeActual = null;
     let surtidorActualNumero = localStorage.getItem("surtidorNumero") || "";
     let surtidorActualNombre = localStorage.getItem("surtidorNombre") || "";
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
@@ -949,7 +840,6 @@ function renderColegios(colegios) {
 
   contenedor.innerHTML = colegios.map(item => {
     const nombre = item.colegio || "";
-
     const periodo = item.periodoVenta || "";
     const promotor = item.promotor || "";
     const cuenta = item.cuenta || "";
@@ -987,8 +877,8 @@ function renderColegios(colegios) {
         <p><strong>Periodo:</strong><br>${periodo}</p>
         <p><strong>Promotor:</strong><br>${promotor}</p>
         <p><strong>Cuenta:</strong><br>${cuenta}</p>
-        ${rolActual !== "promotor" ? `<p><strong>Usuario:</strong><br>${usuario}</p>` : ""}
-        ${rolActual !== "promotor" ? `<p><strong>Password:</strong><br>${password}</p>` : ""}
+        <p><strong>Usuario:</strong><br>${usuario}</p>
+        <p><strong>Password:</strong><br>${password}</p>
         <p><strong>Tipo de envío:</strong><br>${tipoEnvio}</p>
 
        ${
@@ -1002,7 +892,7 @@ function renderColegios(colegios) {
 </button>
 
 <button
-  class="btn-secundario solo-admin"
+  class="btn-secundario"
   onclick='editarColegio(${JSON.stringify(nombre)})'
 >
   Editar
@@ -1037,40 +927,14 @@ function seleccionarColegio(nombre) {
 }
 
   function actualizarEncabezadoColegio() {
-  const texto = document.getElementById("colegio-header-texto");
-  const imgLogo = document.getElementById("logo-colegio");
+  const header = document.getElementById("colegio-header");
 
-  if (!texto) return;
+  if (!header) return;
 
-  if (!colegioActivo) {
-    texto.innerHTML = "🏫 Ningún colegio seleccionado";
-
-    if (imgLogo) {
-      imgLogo.src = "";
-      imgLogo.style.display = "none";
-    }
-
-    return;
-  }
-
-  texto.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
-
-  const colegio = colegiosGlobal.find(item =>
-    normalizarTexto(item.colegio || "") === normalizarTexto(colegioActivo)
-  );
-
-  const logoId = colegio ? String(colegio.logo || "").trim() : "";
-
-  if (logoId && imgLogo) {
-    imgLogo.src =
-      "https://drive.google.com/thumbnail?id=" +
-      encodeURIComponent(logoId) +
-      "&sz=w600";
-
-    imgLogo.style.display = "block";
-  } else if (imgLogo) {
-    imgLogo.src = "";
-    imgLogo.style.display = "none";
+  if (colegioActivo) {
+    header.innerHTML = `🏫 Colegio activo: ${colegioActivo}`;
+  } else {
+    header.innerHTML = "🏫 Ningún colegio seleccionado";
   }
 }
 
@@ -1091,11 +955,6 @@ function limpiarFiltroGlobal() {
 }
 
 function abrirNuevoColegio() {
-  if (rolActual === "promotor") {
-    alert("Tu usuario es de consulta. No puedes crear colegios.");
-    return;
-  }
-
   const modal = document.getElementById("modal-colegio");
   modal.style.display = "block";
 
@@ -1106,11 +965,6 @@ function abrirNuevoColegio() {
 }
 
 function editarColegio(nombre) {
-  if (rolActual === "promotor") {
-    alert("Tu usuario es de consulta. No puedes editar colegios.");
-    return;
-  }
-
   const colegio = colegiosGlobal.find(item =>
     normalizarTexto(item.colegio || "") === normalizarTexto(nombre)
   );
@@ -1274,21 +1128,33 @@ async function buscarSurtidor() {
   lista.innerHTML = "";
 
   if (!colegioActivo) {
-    lista.innerHTML = `<p>Selecciona un colegio para ver pedidos.</p>`;
+    lista.innerHTML = `
+      <p>Selecciona un colegio para ver pedidos.</p>
+    `;
+
     if (kpis) kpis.innerHTML = "";
     return;
   }
 
-  const texto = document.getElementById("buscar-pedido").value.trim();
+  const texto = document
+    .getElementById("buscar-pedido")
+    .value
+    .trim();
 
-  const pedidosColegio = pedidosGlobal.filter(fila =>
-    normalizarTexto(String(fila[3] || "")) === normalizarTexto(colegioActivo)
-  );
+  const pedidosColegio = pedidosGlobal.filter(fila => {
+    const colegioPedido = String(fila[3] || "");
 
-  const contarEstado = estado =>
-    pedidosColegio.filter(fila =>
+    return (
+      normalizarTexto(colegioPedido) ===
+      normalizarTexto(colegioActivo)
+    );
+  });
+
+  const contarEstado = estado => {
+    return pedidosColegio.filter(fila =>
       normalizarTexto(fila[6] || "pendiente") === normalizarTexto(estado)
     ).length;
+  };
 
   const total = pedidosColegio.length;
   const pendientes = contarEstado("pendiente");
@@ -1302,14 +1168,17 @@ async function buscarSurtidor() {
           <h3 style="color:#2b6dd9;">${total}</h3>
           <p>Todos</p>
         </div>
+
         <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('pendiente')">
           <h3 style="color:#d48b00;">${pendientes}</h3>
           <p>Pendientes</p>
         </div>
+
         <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('incompleto')">
           <h3 style="color:#d94f2b;">${incompletos}</h3>
           <p>Incompletos</p>
         </div>
+
         <div class="card" style="flex:1; min-width:120px; cursor:pointer;" onclick="filtrarPedidosEstado('completo')">
           <h3 style="color:green;">${completos}</h3>
           <p>Completos</p>
@@ -1321,12 +1190,15 @@ async function buscarSurtidor() {
   pedidosFiltrados = pedidosColegio.filter(fila => {
     const idPedido = String(fila[0]);
     const status = normalizarTexto(fila[6] || "pendiente");
-    const coincideTexto = !texto || idPedido.includes(texto);
+
+    const coincideTexto =
+      !texto || idPedido.includes(texto);
 
     let coincideEstado = true;
 
     if (filtroEstadoPedidos !== "todos") {
-      coincideEstado = status === normalizarTexto(filtroEstadoPedidos);
+      coincideEstado =
+        status === normalizarTexto(filtroEstadoPedidos);
     }
 
     return coincideTexto && coincideEstado;
@@ -1346,8 +1218,7 @@ async function buscarSurtidor() {
     const surtidor = fila[9] || "Sin asignar";
     const checador = fila[11] || "Sin asignar";
     const guiaURL = fila[13] || "";
-
-    const vale = fila[17] || "";
+    const guiaNombre = fila[14] || "";
 
     pedido.innerHTML = `
       <strong>#${id}</strong><br>
@@ -1376,70 +1247,46 @@ async function buscarSurtidor() {
       Estado:
       <span class="status">${status}</span><br>
 
-      ${
-        vale
-          ? `
-            <p style="color:#b8860b; font-weight:bold;">
-              📄 Vale: ${vale}
-            </p>
-          `
-          : ""
-      }
-
       Surtidor:
       <strong>${surtidor}</strong><br>
 
       Checador:
       <strong>${checador}</strong><br><br>
 
-      <button class="btn-secundario solo-admin" onclick="abrirSurtirPedido('${id}')">
+      <button class="btn-secundario" onclick="abrirSurtirPedido('${id}')">
         👷 Surtir pedido
       </button>
 
-      <button class="btn-secundario solo-admin" onclick="validarAccesoValidacion('${id}')">
+      <button class="btn-secundario" onclick="validarAccesoValidacion('${id}')">
         🔎 Revisión
       </button>
 
-      <button class="btn-secundario solo-admin" onclick="editarLibrosPedido('${id}')">
+      <button class="btn-secundario" onclick="editarLibrosPedido('${id}')">
         ✏️ Editar libros
       </button>
 
-      <button class="btn-secundario solo-admin" onclick="generarPapeleta('${id}')">
+      <button class="btn-secundario" onclick="generarPapeleta('${id}')">
         🧾 Generar papeleta
       </button>
 
-      <button class="btn-secundario solo-admin" onclick="abrirModalGuia('${id}')">
+      <button class="btn-secundario" onclick="abrirModalGuia('${id}')">
         📎 Cargar guía
       </button>
 
-      ${
-        normalizarTexto(status) === "incompleto" && !vale
-          ? `
-            <button
-              class="btn-secundario solo-admin"
-              style="background:#b8860b;"
-              onclick="abrirModalVale('${id}')"
-            >
-              📄 Enviar con vale
-            </button>
-          `
-          : ""
-      }
-
-      ${
+     ${
         guiaURL
-          ? `
-            <button
+            ? `
+           <button
               class="btn-secundario"
-              onclick="window.open('${guiaURL}','_blank')"
-            >
-              👁 Ver guía
-            </button>
-          `
-          : ""
-      }
+            onclick="window.open('${guiaURL}','_blank')"
+          >
+            👁 Ver guía
+           </button>
+         `
+       : ""
+    }
 
-      <button class="solo-admin" onclick="marcarIncompleto('${id}')">
+      <button onclick="marcarIncompleto('${id}')">
         ✗ Incompleto
       </button>
     `;
@@ -1448,7 +1295,9 @@ async function buscarSurtidor() {
   });
 
   if (pedidosFiltrados.length === 0) {
-    lista.innerHTML = `<p>No se encontraron pedidos con ese filtro.</p>`;
+    lista.innerHTML = `
+      <p>No se encontraron pedidos con ese filtro.</p>
+    `;
   }
 }
   
@@ -2118,31 +1967,10 @@ async function leerArchivoPedidoTXT(event) {
         continue;
       }
 
-      const codigosExpandidos = expandirCodigoPaquete(codigo);
-
-if (codigosExpandidos.length > 1) {
-  for (const codigoContenido of codigosExpandidos) {
-    const articuloContenido = await obtenerArticuloParaPedido(
-      codigoContenido,
-      colegio
-    );
-
-    productos.push(
-      articuloContenido?.titulo || codigoContenido
-    );
-
-    codigos.push(codigoContenido);
-  }
-} else {
-  for (let i = 0; i < cantidad; i++) {
-    productos.push(libro.titulo);
-    codigos.push(
-      String(libro.codigo_gonvill || codigo)
-        .trim()
-        .padStart(8, "0")
-    );
-  }
-}
+      for (let i = 0; i < cantidad; i++) {
+        productos.push(libro.titulo);
+        codigos.push(String(libro.codigo_gonvill || codigo).trim().padStart(8, "0"));
+      }
     }
 
     document.getElementById("productos").value = productos.join("/");
@@ -2241,31 +2069,14 @@ if (codigosExpandidos.length > 1) {
       continue;
     }
 
-    const codigosExpandidos = expandirCodigoPaquete(codigo);
-
-if (codigosExpandidos.length > 1) {
-  for (const codigoContenido of codigosExpandidos) {
-    const articuloContenido = await obtenerArticuloParaPedido(
-      codigoContenido,
-      colegio
-    );
-
-    productos.push(
-      articuloContenido?.titulo || codigoContenido
-    );
-
-    codigos.push(codigoContenido);
-  }
-} else {
-  for (let i = 0; i < cantidad; i++) {
-    productos.push(libro.titulo);
-    codigos.push(
-      String(libro.codigo_gonvill || codigo)
-        .trim()
-        .padStart(8, "0")
-    );
-  }
-}
+    for (let i = 0; i < cantidad; i++) {
+      productos.push(libro.titulo);
+      codigos.push(
+        String(libro.codigo_gonvill || codigo)
+          .trim()
+          .padStart(8, "0")
+      );
+    }
   }
 
   document.getElementById("productos").value = productos.join("/");
@@ -3830,14 +3641,10 @@ function abrirValidacionFisica(id) {
     return;
   }
 
-  const codigosOriginales = String(pedido[7] || "")
-  .split("/")
-  .map(c => String(c).trim().padStart(8, "0"))
-  .filter(Boolean);
-
-   const codigos = codigosOriginales.flatMap(codigo =>
-  expandirCodigoPaquete(codigo)
-  );
+  const codigos = String(pedido[7] || "")
+    .split("/")
+    .map(c => String(c).trim().padStart(8, "0"))
+    .filter(Boolean);
 
   if (codigos.length === 0) {
     alert("Este pedido no tiene códigos Gonvill guardados.");
@@ -3909,23 +3716,6 @@ function abrirValidacionFisica(id) {
     const colegio = pedidoValidando
       ? String(pedidoValidando[3] || "").trim()
       : "";
-
-    const codigosExpandidos = expandirCodigoPaquete(codigo);
-
-    if (codigosExpandidos.length > 1) {
-      codigosExpandidos.forEach(codigoItem => {
-        codigosEscaneadosValidacion.push(codigoItem);
-      });
-
-      document.getElementById("resultado-validacion").innerHTML = `
-        <p style="color:green;">
-          Paquete detectado. Se agregaron ${codigosExpandidos.length} artículos.
-        </p>
-      `;
-
-      renderValidacionFisica();
-      return;
-    }
 
     let libro = await obtenerArticuloParaPedido(codigo, colegio);
 
@@ -5000,7 +4790,7 @@ function abrirValidacionFisica(id) {
   else if (usuario === "promotor" && password === "1234") {
     usuarioActual = "promotor";
     rolActual = "promotor";
-    colegioUsuarioActual = "";
+    colegioUsuarioActual = "MCGREGOR";
   }
   else {
     error.innerHTML = `<p style="color:red;">Usuario o contraseña incorrectos.</p>`;
@@ -5015,292 +4805,21 @@ function abrirValidacionFisica(id) {
   function aplicarPermisosUsuario() {
   if (rolActual !== "promotor") return;
 
-  document.body.classList.add("modo-promotor");
-
-  const colegioHeader = document.getElementById("colegio-header");
-  if (colegioHeader) {
-    colegioHeader.innerHTML = "🏫 Modo promotor: solo consulta. Selecciona el colegio que deseas revisar.";
-  }
-
-  // En modo promotor NO se asigna colegio automático.
-  // El promotor puede buscar y seleccionar el colegio desde la sección Colegios.
-  colegioActivo = "";
-
-  const label = document.getElementById("colegio-activo-label");
-  if (label) {
-    label.innerHTML = "Ningún colegio seleccionado";
-  }
-
-  // Ocultar pestañas operativas.
-  document.querySelectorAll(".tab-admin").forEach(el => {
-    el.style.display = "none";
-  });
-
-  // Ocultar cualquier botón marcado como solo administrador.
-  document.querySelectorAll(".solo-admin").forEach(el => {
-    el.style.display = "none";
-  });
-
-  bloquearCamposPromotor();
-  ocultarAccionesPromotor();
-
-  renderColegios(colegiosGlobal);
-  cargarPedidos();
-  cargarInventario();
-  cargarAlertasFaltantes();
-  cargarCajas();
-
-  // Vigila botones que se generan dinámicamente, como los de pedidos.
-  const observer = new MutationObserver(() => {
-    ocultarAccionesPromotor();
-    bloquearCamposPromotor();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-}
-
-function bloquearCamposPromotor() {
-  if (rolActual !== "promotor") return;
-
-  const camposPermitidos = [
-    "buscar-colegio",
-    "buscar-pedido",
-    "buscar-ubicacion-pedido"
-  ];
-
-  document.querySelectorAll("input, select, textarea").forEach(campo => {
-    if (campo.closest("#login-modal")) return;
-
-    if (camposPermitidos.includes(campo.id)) {
-      campo.disabled = false;
-    } else {
-      campo.disabled = true;
-    }
-  });
-}
-
-function ocultarAccionesPromotor() {
-  if (rolActual !== "promotor") return;
-
-  const accionesBloqueadas = [
-    "abrirNuevoColegio",
-    "editarColegio",
-    "guardarColegio",
-    "guardarPedido",
-    "abrirSurtirPedido",
-    "validarAccesoValidacion",
-    "editarLibrosPedido",
-    "generarPapeleta",
-    "abrirModalGuia",
-    "marcarIncompleto",
-    "marcarCompleto",
-    "guardarFaltantesSeleccionados",
-    "guardarLibrosEditados",
-    "confirmarSurtidorPedido",
-    "subirGuiaPedidoHTML",
-    "confirmarUbicacionActual",
-    "buscarOtraUbicacion",
-    "cancelarUbicacionSinMarcar",
-    "abrirNuevoProducto",
-    "abrirMovimientoInventario",
-    "guardarProducto",
-    "guardarMovimientoInventario",
-    "guardarPaquete",
-    "agregarPedidoACaja",
-    "registrarListaCaja",
-    "retirarPedidoCaja",
-    "cerrarLoteCajas",
-    "registrarLotePaqueteria",
-    "limpiarLotePaqueteria",
-    "registrarLoteEmpaqueHTML",
-    "limpiarEmpaqueTemporal",
-    "repararFaltantesIncompletos"
-  ];
-
   document.querySelectorAll("button").forEach(btn => {
-    const accion = btn.getAttribute("onclick") || "";
+    const texto = btn.innerText.toLowerCase();
 
-    if (btn.closest("#login-modal")) return;
+    const permitido =
+      texto.includes("ver") ||
+      texto.includes("ocultar") ||
+      texto.includes("actualizar") ||
+      texto.includes("descargar") ||
+      texto.includes("reporte") ||
+      texto.includes("buscar");
 
-    if (accionesBloqueadas.some(nombre => accion.includes(nombre))) {
+    if (!permitido) {
       btn.style.display = "none";
     }
   });
-}
-
-  function leerBusquedaEmpaquePedido(event) {
-  if (event.key !== "Enter") return;
-
-  event.preventDefault();
-  buscarEmpaquePorPedido();
-}
-
-  function leerBusquedaEmpaqueEmpleado(event) {
-  if (event.key !== "Enter") return;
-
-  event.preventDefault();
-  buscarEmpaquePorEmpleado();
-}
-
-  async function buscarEmpaquePorPedido() {
-  const input = document.getElementById("buscar-empaque-pedido");
-  const resultado = document.getElementById("resultado-busqueda-empaque");
-
-  let texto = input.value.trim();
-
-  if (!texto) {
-    alert("Escanea o escribe un número de pedido.");
-    return;
-  }
-
-  const partes = texto.split("+");
-  const pedidoBuscado = String(partes[0] || texto).trim();
-
-  try {
-    resultado.innerHTML = "<p>Buscando empaque...</p>";
-
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empaque`);
-    const datos = await respuesta.json();
-    const filas = datos.slice(1);
-
-    const encontrados = filas.filter(fila =>
-      String(fila[0] || "").trim() === pedidoBuscado
-    );
-
-    if (encontrados.length === 0) {
-      resultado.innerHTML = `
-        <p style="color:red;">
-          No se encontró registro de empaque para el pedido ${pedidoBuscado}.
-        </p>
-      `;
-      return;
-    }
-
-    resultado.innerHTML = `
-      <h3>Resultado por pedido</h3>
-      ${encontrados.map(fila => `
-        <div class="card">
-          <p><strong>Pedido:</strong> ${fila[0]}</p>
-          <p><strong>Colegio:</strong> ${fila[1]}</p>
-          <p><strong>Alumno:</strong> ${fila[2]}</p>
-          <p><strong>Grado:</strong> ${fila[3]}</p>
-          <p><strong>Empacador No.:</strong> ${fila[4]}</p>
-          <p><strong>Empacador:</strong> ${fila[5]}</p>
-          <p><strong>Fecha:</strong> ${fila[6] || ""}</p>
-          <p><strong>Hora:</strong> ${fila[7] || ""}</p>
-        </div>
-      `).join("")}
-    `;
-
-    input.value = "";
-    input.focus();
-
-  } catch (error) {
-    console.error(error);
-    resultado.innerHTML = `
-      <p style="color:red;">
-        Error al buscar registro de empaque.
-      </p>
-    `;
-  }
-}
-
-  async function buscarEmpaquePorEmpleado() {
-  const input = document.getElementById("buscar-empaque-empleado");
-  const resultado = document.getElementById("resultado-busqueda-empaque");
-
-  const empleadoBuscado = input.value.trim();
-
-  if (!empleadoBuscado) {
-    alert("Escanea o escribe un número de empleado.");
-    return;
-  }
-
-  try {
-    resultado.innerHTML = "<p>Buscando pedidos empacados...</p>";
-
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empaque`);
-    const datos = await respuesta.json();
-    const filas = datos.slice(1);
-
-    const encontrados = filas.filter(fila =>
-      String(fila[4] || "").trim() === String(empleadoBuscado)
-    );
-
-    if (encontrados.length === 0) {
-      resultado.innerHTML = `
-        <p style="color:red;">
-          No se encontraron pedidos empacados por el empleado ${empleadoBuscado}.
-        </p>
-      `;
-      return;
-    }
-
-    resultado.innerHTML = `
-      <h3>Pedidos empacados por empleado ${empleadoBuscado}</h3>
-      <p><strong>Total:</strong> ${encontrados.length}</p>
-
-      ${encontrados.map(fila => `
-        <div style="
-          border:1px solid #ddd;
-          border-radius:10px;
-          padding:10px;
-          margin-bottom:8px;
-          background:white;
-        ">
-          <strong>#${fila[0]}</strong><br>
-          Alumno: ${fila[2]}<br>
-          Grado: ${fila[3]}<br>
-          Colegio: ${fila[1]}<br>
-          Empacador: ${fila[5]}<br>
-          Fecha: ${fila[6] || ""} ${fila[7] || ""}
-        </div>
-      `).join("")}
-    `;
-
-    input.value = "";
-    input.focus();
-
-  } catch (error) {
-    console.error(error);
-    resultado.innerHTML = `
-      <p style="color:red;">
-        Error al buscar pedidos del empleado.
-      </p>
-    `;
-  }
-}
-
-  async function generarReporteRendimientoEmpaqueHTML() {
-  try {
-    const respuesta = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        accion: "generarReporteRendimientoEmpaque"
-      })
-    });
-
-    const resultado = await respuesta.json();
-
-    if (!resultado.ok) {
-      alert("Error: " + resultado.error);
-      return;
-    }
-
-    const link = document.createElement("a");
-    link.href = resultado.downloadUrl;
-    link.download = resultado.nombre + ".xlsx";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  } catch (error) {
-    console.error(error);
-    alert("No se pudo generar el reporte de rendimiento.");
-  }
 }
   
     function normalizarTexto(texto) {
@@ -5356,8 +4875,8 @@ document.getElementById("mov-nota").value = "";
 
 document.getElementById("scan-isbn-movimiento").focus();
 
-   cargarInventario();
-   cargarAlertasFaltantes();
+cargarInventario();
+cargarAlertasFaltantes();
 
       } catch (error) {
         alert("No se pudo guardar el movimiento.");
@@ -5371,7 +4890,6 @@ document.getElementById("scan-isbn-movimiento").focus();
     cargarCajas();
     cargarColegios();
     cargarEmpleados();
-    cargarPaquetes();
     actualizarEncabezadoColegio();
   </script>
 
