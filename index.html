@@ -3451,23 +3451,37 @@ function filtrarInventarioEstado(estado) {
 }
   
 async function cargarAlertasFaltantes() {
+  if (!colegioActivo) {
+    const contenedor = document.getElementById("alertas-faltantes");
+    if (contenedor) {
+      contenedor.innerHTML = "<p>Selecciona un colegio para ver faltantes.</p>";
+    }
+    return;
+  }
+
   try {
-    const [resPedidos, resInventario] = await Promise.all([
-      fetch(`${SCRIPT_URL}?hoja=Pedidos`),
-      fetch(`${SCRIPT_URL}?hoja=Inventario`)
-    ]);
+    const resPedidos = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
+    const resInventario = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+
+    if (!resPedidos.ok || !resInventario.ok) {
+      console.error("Error HTTP en faltantes", {
+        pedidos: resPedidos.status,
+        inventario: resInventario.status
+      });
+
+      document.getElementById("alertas-faltantes").innerHTML = `
+        <p style="color:red;">
+          No se pudieron cargar los faltantes. Intenta actualizar.
+        </p>
+      `;
+      return;
+    }
 
     const pedidosData = await resPedidos.json();
     const inventarioData = await resInventario.json();
 
     const pedidos = pedidosData.slice(1);
     const inventario = inventarioData.slice(1);
-
-    if (!colegioActivo) {
-      document.getElementById("alertas-faltantes").innerHTML =
-        "<p>Selecciona un colegio para ver faltantes.</p>";
-      return;
-    }
 
     const pedidosFiltrados = pedidos.filter(pedido =>
       normalizarTexto(pedido[3]) === normalizarTexto(colegioActivo)
@@ -3480,10 +3494,18 @@ async function cargarAlertasFaltantes() {
     renderAlertasFaltantes(pedidosFiltrados, inventarioFiltrado);
 
   } catch (error) {
-    console.error(error);
+    console.error("Error cargando alertas faltantes:", error);
+
+    const contenedor = document.getElementById("alertas-faltantes");
+    if (contenedor) {
+      contenedor.innerHTML = `
+        <p style="color:red;">
+          Error al cargar alertas de faltantes.
+        </p>
+      `;
+    }
   }
 }
-
     function renderAlertasFaltantes(pedidos, inventario) {
   const contenedor = document.getElementById("alertas-faltantes");
   const mapa = {};
