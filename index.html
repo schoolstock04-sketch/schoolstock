@@ -741,43 +741,118 @@
     let checadorActualNumero = localStorage.getItem("checadorNumero") || "";
     let checadorActualNombre = localStorage.getItem("checadorNombre") || "";
 
+    const FETCH_TIMEOUT_MS = 12000;
+
+    function esURLInsegura(url) {
+      return location.protocol === "https:" && String(url || "").startsWith("http://");
+    }
+
+    function mostrarMensaje(contenedorId, mensaje, color = "#d94f2b") {
+      const contenedor = document.getElementById(contenedorId);
+      if (!contenedor) return;
+      contenedor.innerHTML = `<p style="color:${color};">${mensaje}</p>`;
+    }
+
+    async function fetchConTimeout(url, opciones = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+      if (esURLInsegura(url)) {
+        throw new Error("URL_HTTP_BLOQUEADA_POR_HTTPS");
+      }
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const respuesta = await fetch(url, {
+          ...opciones,
+          signal: controller.signal
+        });
+        return respuesta;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function leerJSONSeguro(respuesta, contexto = "petición") {
+      const texto = await respuesta.text();
+
+      if (!respuesta.ok) {
+        throw new Error(`${contexto}: HTTP ${respuesta.status} - ${texto.slice(0, 120)}`);
+      }
+
+      try {
+        return JSON.parse(texto);
+      } catch (error) {
+        throw new Error(`${contexto}: respuesta no es JSON válido. Inicio: ${texto.slice(0, 80)}`);
+      }
+    }
+
+    async function getHojaSeguro(hoja) {
+      const respuesta = await fetchConTimeout(`${SCRIPT_URL}?hoja=${encodeURIComponent(hoja)}`);
+      return leerJSONSeguro(respuesta, `GET hoja ${hoja}`);
+    }
+
+    async function getColegiosSeguro() {
+      const respuesta = await fetchConTimeout(`${SCRIPT_URL}?colegios=1`);
+      return leerJSONSeguro(respuesta, "GET colegios");
+    }
+
+    async function postSeguro(payload, contexto = "POST") {
+      const respuesta = await fetchConTimeout(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      return leerJSONSeguro(respuesta, contexto);
+    }
+
+    function manejarErrorModulo(error, mensajeUsuario, contenedorId = null) {
+      console.error(mensajeUsuario, error);
+      if (contenedorId) {
+        mostrarMensaje(contenedorId, mensajeUsuario);
+      }
+    }
+
+
     async function cargarPedidos() {
   const estado = document.getElementById("estado");
   const lista = document.getElementById("lista-pedidos");
 
   if (!colegioActivo) {
-    lista.innerHTML = `
-      <p>Selecciona un colegio para ver pedidos.</p>
-    `;
-
-    estado.textContent = "Selecciona un colegio";
-    estado.className = "";
-
+    if (lista) lista.innerHTML = `<p>Selecciona un colegio para ver pedidos.</p>`;
+    if (estado) {
+      estado.textContent = "Selecciona un colegio";
+      estado.className = "";
+    }
     return;
   }
 
   try {
-    estado.textContent = "Cargando pedidos...";
-    estado.className = "";
+    if (estado) {
+      estado.textContent = "Cargando pedidos...";
+      estado.className = "";
+    }
 
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
-    const datos = await respuesta.json();
-
-    const filas = datos.slice(1);
+    const datos = await getHojaSeguro("Pedidos");
+    const filas = Array.isArray(datos) ? datos.slice(1) : [];
 
     pedidosGlobal = filas;
     pedidosFiltrados = filas;
 
     filtrarPedidos();
 
-    estado.textContent = "Conectado a Google Sheets";
-    estado.className = "ok";
+    if (estado) {
+      estado.textContent = "Conectado a Google Sheets";
+      estado.className = "ok";
+    }
 
   } catch (error) {
-    estado.textContent = "Error al conectar con Google Sheets";
-    estado.className = "error";
-
-    console.error(error);
+    if (estado) {
+      estado.textContent = "Error al conectar con Google Sheets";
+      estado.className = "error";
+    }
+    if (lista) {
+      lista.innerHTML = `<p style="color:red;">No se pudieron cargar los pedidos. Revisa la conexión o Apps Script.</p>`;
+    }
+    console.error("Error cargando pedidos:", error);
   }
 }
 
@@ -785,12 +860,11 @@ let colegiosGlobal = [];
 
 async function cargarColegios() {
   try {
-    const respuesta = await fetch(`${SCRIPT_URL}?colegios=1`);
-    const colegios = await respuesta.json();
+    const colegios = await getColegiosSeguro();
 
-    colegiosGlobal = colegios;
+    colegiosGlobal = Array.isArray(colegios) ? colegios : [];
 
-    renderColegios(colegios);
+    renderColegios(colegiosGlobal);
 
     const selects = [
       "colegio",
@@ -804,23 +878,20 @@ async function cargarColegios() {
 
       if (!select) return;
 
-      select.innerHTML = `
-        <option value="">Selecciona colegio</option>
-      `;
+      select.innerHTML = `<option value="">Selecciona colegio</option>`;
 
-      colegios.forEach(item => {
+      colegiosGlobal.forEach(item => {
         const nombre = item.colegio || item;
-
-        select.innerHTML += `
-          <option value="${nombre}">
-            ${nombre}
-          </option>
-        `;
+        select.innerHTML += `<option value="${nombre}">${nombre}</option>`;
       });
     });
 
   } catch(error) {
-    console.error(error);
+    console.error("Error cargando colegios:", error);
+    const contenedor = document.getElementById("lista-colegios");
+    if (contenedor) {
+      contenedor.innerHTML = `<p style="color:red;">No se pudieron cargar los colegios. Revisa Apps Script.</p>`;
+    }
   }
 }
 
@@ -1816,25 +1887,37 @@ async function obtenerLibroPorISBN(codigo) {
     return cacheISBN[codigoLimpio];
   }
 
-  const respuesta = await fetch(
-    `${API_CATALOGO_URL}/api/articulo/${encodeURIComponent(codigoLimpio)}`
-  );
-
-  const libro = await respuesta.json();
-
-  if (libro) {
-    cacheISBN[codigoLimpio] = libro;
-
-    if (libro.codigo_gonvill) {
-      cacheISBN[String(libro.codigo_gonvill).trim()] = libro;
-    }
-
-    if (libro.isbn) {
-      cacheISBN[String(libro.isbn).trim()] = libro;
-    }
+  if (!API_CATALOGO_URL || esURLInsegura(API_CATALOGO_URL)) {
+    return null;
   }
 
-  return libro;
+  try {
+    const respuesta = await fetchConTimeout(
+      `${API_CATALOGO_URL}/api/articulo/${encodeURIComponent(codigoLimpio)}`,
+      {},
+      6000
+    );
+
+    const libro = await leerJSONSeguro(respuesta, "Catálogo artículo");
+
+    if (libro) {
+      cacheISBN[codigoLimpio] = libro;
+
+      if (libro.codigo_gonvill) {
+        cacheISBN[String(libro.codigo_gonvill).trim()] = libro;
+      }
+
+      if (libro.isbn) {
+        cacheISBN[String(libro.isbn).trim()] = libro;
+      }
+    }
+
+    return libro;
+
+  } catch (error) {
+    console.warn("Catálogo externo no disponible, usando Inventario/CatalogoManual:", error.message);
+    return null;
+  }
 }
 
 async function obtenerArticuloParaPedido(codigo, colegio) {
@@ -2011,33 +2094,51 @@ async function leerArchivoPedidoTXT(event) {
 
   if (!pedidoId) return;
 
-  try {
-    resultado.innerHTML = "<p>Buscando TXT del pedido...</p>";
-
-    const respuesta = await fetch(
-      `${API_CATALOGO_URL}/api/pedido-txt/${encodeURIComponent(pedidoId)}`
-    );
-
-    const data = await respuesta.json();
-
-    if (!data.ok) {
+  if (!API_CATALOGO_URL || esURLInsegura(API_CATALOGO_URL)) {
+    if (resultado) {
       resultado.innerHTML = `
         <p style="color:orange;">
-          No se encontró TXT para el pedido ${pedidoId}.
+          La carga automática del TXT está desactivada porque el servidor local usa HTTP y la página está en HTTPS.
+          Puedes cargar el archivo TXT manualmente.
         </p>
       `;
+    }
+    return;
+  }
+
+  try {
+    if (resultado) resultado.innerHTML = "<p>Buscando TXT del pedido...</p>";
+
+    const respuesta = await fetchConTimeout(
+      `${API_CATALOGO_URL}/api/pedido-txt/${encodeURIComponent(pedidoId)}`,
+      {},
+      7000
+    );
+
+    const data = await leerJSONSeguro(respuesta, "TXT pedido");
+
+    if (!data.ok) {
+      if (resultado) {
+        resultado.innerHTML = `
+          <p style="color:orange;">
+            No se encontró TXT para el pedido ${pedidoId}.
+          </p>
+        `;
+      }
       return;
     }
 
     await procesarTextoPedidoTXT(data.contenido);
 
   } catch (error) {
-    console.error(error);
-    resultado.innerHTML = `
-      <p style="color:red;">
-        Error al cargar TXT desde servidor.
-      </p>
-    `;
+    console.warn("No se pudo cargar TXT desde servidor:", error.message);
+    if (resultado) {
+      resultado.innerHTML = `
+        <p style="color:orange;">
+          No se pudo cargar el TXT automáticamente. Puedes subirlo manualmente.
+        </p>
+      `;
+    }
   }
 }
 
@@ -2752,13 +2853,12 @@ async function cerrarLoteCajas() {
 
     async function cargarCajas() {
   try {
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Cajas`);
-    const datos = await respuesta.json();
-    const filas = datos.slice(1);
+    const datos = await getHojaSeguro("Cajas");
+    const filas = Array.isArray(datos) ? datos.slice(1) : [];
 
     if (!colegioActivo) {
-      document.getElementById("lista-cajas").innerHTML =
-        "<p>Selecciona un colegio para ver cajas.</p>";
+      const lista = document.getElementById("lista-cajas");
+      if (lista) lista.innerHTML = "<p>Selecciona un colegio para ver cajas.</p>";
       return;
     }
 
@@ -2769,7 +2869,9 @@ async function cerrarLoteCajas() {
     renderCajas(filtradas);
 
   } catch(error) {
-    console.error(error);
+    console.error("Error cargando cajas:", error);
+    const lista = document.getElementById("lista-cajas");
+    if (lista) lista.innerHTML = `<p style="color:red;">No se pudo cargar la relación de cajas.</p>`;
   }
 }
 
@@ -3255,9 +3357,8 @@ function imprimirCaja(caja) {
 
     async function cargarInventario() {
   try {
-    const respuesta = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
-    const datos = await respuesta.json();
-    const filas = datos.slice(1);
+    const datos = await getHojaSeguro("Inventario");
+    const filas = Array.isArray(datos) ? datos.slice(1) : [];
 
     if (!colegioActivo) {
       renderInventario([]);
@@ -3271,7 +3372,9 @@ function imprimirCaja(caja) {
     renderInventario(filtradas);
 
   } catch(error) {
-    console.error(error);
+    console.error("Error cargando inventario:", error);
+    const lista = document.getElementById("lista-inventario");
+    if (lista) lista.innerHTML = `<p style="color:red;">No se pudo cargar inventario.</p>`;
   }
 }
 
@@ -3451,37 +3554,21 @@ function filtrarInventarioEstado(estado) {
 }
   
 async function cargarAlertasFaltantes() {
+  const contenedor = document.getElementById("alertas-faltantes");
+
   if (!colegioActivo) {
-    const contenedor = document.getElementById("alertas-faltantes");
-    if (contenedor) {
-      contenedor.innerHTML = "<p>Selecciona un colegio para ver faltantes.</p>";
-    }
+    if (contenedor) contenedor.innerHTML = "<p>Selecciona un colegio para ver faltantes.</p>";
     return;
   }
 
   try {
-    const resPedidos = await fetch(`${SCRIPT_URL}?hoja=Pedidos`);
-    const resInventario = await fetch(`${SCRIPT_URL}?hoja=Inventario`);
+    const [pedidosData, inventarioData] = await Promise.all([
+      getHojaSeguro("Pedidos"),
+      getHojaSeguro("Inventario")
+    ]);
 
-    if (!resPedidos.ok || !resInventario.ok) {
-      console.error("Error HTTP en faltantes", {
-        pedidos: resPedidos.status,
-        inventario: resInventario.status
-      });
-
-      document.getElementById("alertas-faltantes").innerHTML = `
-        <p style="color:red;">
-          No se pudieron cargar los faltantes. Intenta actualizar.
-        </p>
-      `;
-      return;
-    }
-
-    const pedidosData = await resPedidos.json();
-    const inventarioData = await resInventario.json();
-
-    const pedidos = pedidosData.slice(1);
-    const inventario = inventarioData.slice(1);
+    const pedidos = Array.isArray(pedidosData) ? pedidosData.slice(1) : [];
+    const inventario = Array.isArray(inventarioData) ? inventarioData.slice(1) : [];
 
     const pedidosFiltrados = pedidos.filter(pedido =>
       normalizarTexto(pedido[3]) === normalizarTexto(colegioActivo)
@@ -3494,18 +3581,13 @@ async function cargarAlertasFaltantes() {
     renderAlertasFaltantes(pedidosFiltrados, inventarioFiltrado);
 
   } catch (error) {
-    console.error("Error cargando alertas faltantes:", error);
-
-    const contenedor = document.getElementById("alertas-faltantes");
+    console.error("Error cargando alertas de faltantes:", error);
     if (contenedor) {
-      contenedor.innerHTML = `
-        <p style="color:red;">
-          Error al cargar alertas de faltantes.
-        </p>
-      `;
+      contenedor.innerHTML = `<p style="color:red;">No se pudieron cargar los faltantes. Intenta actualizar más tarde.</p>`;
     }
   }
 }
+
     function renderAlertasFaltantes(pedidos, inventario) {
   const contenedor = document.getElementById("alertas-faltantes");
   const mapa = {};
@@ -4777,15 +4859,22 @@ function abrirValidacionFisica(id) {
 }
 
   async function cargarEmpleados() {
-  const respuesta = await fetch(`${SCRIPT_URL}?hoja=Empleados`);
-  const datos = await respuesta.json();
+  try {
+    const datos = await getHojaSeguro("Empleados");
 
-  empleadosGlobal = datos.slice(1).map(fila => ({
-    numero: String(fila[0] || "").trim(),
-    nombre: String(fila[1] || "").trim()
-  }));
+    empleadosGlobal = Array.isArray(datos)
+      ? datos.slice(1).map(fila => ({
+          numero: String(fila[0] || "").trim(),
+          nombre: String(fila[1] || "").trim()
+        }))
+      : [];
 
-  console.log("Empleados cargados:", empleadosGlobal);
+    console.log("Empleados cargados:", empleadosGlobal);
+
+  } catch (error) {
+    console.error("Error cargando empleados:", error);
+    empleadosGlobal = [];
+  }
 }
 
   function leerLoginEnter(event) {
@@ -4885,12 +4974,15 @@ function abrirValidacionFisica(id) {
 
        alert("Entrada registrada. Nuevo stock: " + resultado.nuevoStock);
 
+// Limpiar solo campos de captura
 document.getElementById("scan-isbn-movimiento").value = "";
 document.getElementById("resultado-isbn-movimiento").innerHTML = "";
 
 document.getElementById("mov-producto").value = "";
 document.getElementById("mov-cantidad").value = "";
 document.getElementById("mov-nota").value = "";
+
+// Mantener colegio seleccionado
 
 document.getElementById("scan-isbn-movimiento").focus();
 
@@ -4903,12 +4995,16 @@ cargarAlertasFaltantes();
       }
     }
 
-    cargarPedidos();
-    cargarInventario();
-    cargarCajas();
-    cargarColegios();
-    cargarEmpleados();
-    actualizarEncabezadoColegio();
+    async function iniciarSchoolStock() {
+      actualizarEncabezadoColegio();
+      await cargarColegios();
+      await cargarEmpleados();
+      await cargarInventario();
+      await cargarCajas();
+      await cargarPedidos();
+    }
+
+    iniciarSchoolStock();
   </script>
 
 </body>
