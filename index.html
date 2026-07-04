@@ -701,7 +701,7 @@
 
 
     const API_CATALOGO_URL = window.location.origin;
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrtruUjmJT-2BHkX-D03NO_J6cEAbFHzA5rbeCHETPsINNxr1t8zdDlwQRa-N1ttz0/exec";
+    const SCRIPT_URL = window.location.origin + "/api/sheets";
     let pedidosGlobal = [];
     let pedidosFiltrados = [];
     let colegioActivo = "";
@@ -840,17 +840,17 @@
     filtrarPedidos();
 
     if (estado) {
-      estado.textContent = "Conectado a Google Sheets";
+      estado.textContent = "Conectado a MySQL";
       estado.className = "ok";
     }
 
   } catch (error) {
     if (estado) {
-      estado.textContent = "Error al conectar con Google Sheets";
+      estado.textContent = "Error al conectar con MySQL";
       estado.className = "error";
     }
     if (lista) {
-      lista.innerHTML = `<p style="color:red;">No se pudieron cargar los pedidos. Revisa la conexión o Apps Script.</p>`;
+      lista.innerHTML = `<p style="color:red;">No se pudieron cargar los pedidos. Revisa el servidor o MySQL.</p>`;
     }
     console.error("Error cargando pedidos:", error);
   }
@@ -890,7 +890,7 @@ async function cargarColegios() {
     console.error("Error cargando colegios:", error);
     const contenedor = document.getElementById("lista-colegios");
     if (contenedor) {
-      contenedor.innerHTML = `<p style="color:red;">No se pudieron cargar los colegios. Revisa Apps Script.</p>`;
+      contenedor.innerHTML = `<p style="color:red;">No se pudieron cargar los colegios. Revisa el servidor o MySQL.</p>`;
     }
   }
 }
@@ -4883,7 +4883,7 @@ function abrirValidacionFisica(id) {
   loginUsuario();
 }
 
-  function loginUsuario() {
+  async function loginUsuario() {
   const usuario = document.getElementById("login-usuario").value.trim();
   const password = document.getElementById("login-password").value.trim();
   const error = document.getElementById("login-error");
@@ -4893,24 +4893,33 @@ function abrirValidacionFisica(id) {
     return;
   }
 
-  if (usuario === "admin" && password === "1234") {
-    usuarioActual = "admin";
-    rolActual = "admin";
-    colegioUsuarioActual = "TODOS";
-  }
-  else if (usuario === "promotor" && password === "1234") {
-    usuarioActual = "promotor";
-    rolActual = "promotor";
-    colegioUsuarioActual = "MCGREGOR";
-  }
-  else {
-    error.innerHTML = `<p style="color:red;">Usuario o contraseña incorrectos.</p>`;
-    return;
-  }
+  try {
+    error.innerHTML = `<p>Validando usuario...</p>`;
 
-  document.getElementById("login-modal").style.display = "none";
+    const respuesta = await fetch(`${window.location.origin}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario, password })
+    });
 
-  aplicarPermisosUsuario();
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      error.innerHTML = `<p style="color:red;">${resultado.error || "Usuario o contraseña incorrectos."}</p>`;
+      return;
+    }
+
+    usuarioActual = resultado.usuario || usuario;
+    rolActual = resultado.rol || "promotor";
+    colegioUsuarioActual = resultado.colegio || "TODOS";
+
+    document.getElementById("login-modal").style.display = "none";
+    aplicarPermisosUsuario();
+
+  } catch (e) {
+    console.error(e);
+    error.innerHTML = `<p style="color:red;">No se pudo validar el usuario.</p>`;
+  }
 }
 
   function aplicarPermisosUsuario() {
