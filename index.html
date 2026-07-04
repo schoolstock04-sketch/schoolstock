@@ -704,7 +704,7 @@
     const SCRIPT_URL = window.location.origin + "/api/sheets";
     let pedidosGlobal = [];
     let pedidosFiltrados = [];
-    let colegioActivo = "";
+    let colegioActivo = localStorage.getItem("colegioActivo") || "";
     let colegioDetectadoCaja = "";
     let colegioEditando = "";
     let soloAlertasInventario = false;
@@ -984,10 +984,12 @@ ${
 function seleccionarColegio(nombre) {
   colegioActivo = nombre;
 
+  localStorage.setItem("colegioActivo", nombre);
+
   document.getElementById("colegio-activo-label").innerHTML =
     `<strong>Colegio activo:</strong> ${nombre}`;
-  
-    actualizarEncabezadoColegio();
+
+  actualizarEncabezadoColegio();
 
   renderColegios(colegiosGlobal);
 
