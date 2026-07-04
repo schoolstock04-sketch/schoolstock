@@ -1014,6 +1014,8 @@ function seleccionarColegio(nombre) {
 function limpiarFiltroGlobal() {
   colegioActivo = "";
 
+  localStorage.removeItem("colegioActivo");
+
   actualizarEncabezadoColegio();
 
   document.getElementById("colegio-activo-label").innerHTML =
