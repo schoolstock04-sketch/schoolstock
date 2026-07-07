@@ -492,6 +492,38 @@
     <button onclick="guardarMovimientoInventario()">Guardar entrada</button>
     <button onclick="cerrarMovimientoInventario()">Cancelar</button>
   </div>
+
+  <div id="modal-editar-stock" class="card" style="display:none;">
+    <h2>Modificar inventario</h2>
+
+    <div id="info-editar-stock"></div>
+
+    <input id="editar-stock-producto" type="hidden">
+    <input id="editar-stock-colegio" type="hidden">
+    <input id="editar-stock-codigo" type="hidden">
+
+    <label>Stock actual</label>
+    <input id="editar-stock-stock" type="number" min="0" placeholder="Stock">
+
+    <label>Stock máximo / referencia</label>
+    <input id="editar-stock-max" type="number" min="0" placeholder="Máximo">
+
+    <label>Backorder</label>
+    <input id="editar-stock-backorder" type="number" min="0" placeholder="Backorder">
+
+    <label>Surtidos</label>
+    <input id="editar-stock-surtidos" type="number" min="0" placeholder="Surtidos">
+
+    <input id="editar-stock-nota" placeholder="Motivo del ajuste. Ej. Corrección de captura">
+
+    <button onclick="guardarAjusteInventarioManual()">
+      Guardar ajuste
+    </button>
+
+    <button class="btn-secundario" onclick="cerrarEditarStockInventario()">
+      Cancelar
+    </button>
+  </div>
   <div class="card">
   <h2>Panel de inventario</h2>
 
@@ -720,6 +752,7 @@
     let pedidosPaqueteria = [];
     const cacheISBN = {};
     let libroProductoSeleccionado = null;
+    let productoEditandoStock = null;
     let codigosGonvillPedido = [];
     let pedidoValidando = null;
     let codigosEsperadosValidacion = [];
@@ -3549,6 +3582,22 @@ function toggleInventarioAlertas() {
             ">
           </div>
         </div>
+
+        <button
+          class="btn-secundario"
+          style="margin-top:10px;"
+          onclick='abrirEditarStockInventario(${JSON.stringify({
+            nombre,
+            colegio,
+            stock,
+            max,
+            backorder,
+            surtidos,
+            codigoGonvill
+          })})'
+        >
+          ✏️ Modificar inventario
+        </button>
       </div>
     `;
   });
@@ -3564,6 +3613,110 @@ function filtrarInventarioEstado(estado) {
   filtroInventarioEstado = estado;
   cargarInventario();
 }
+
+
+function abrirEditarStockInventario(item) {
+  productoEditandoStock = item;
+
+  document.getElementById("editar-stock-producto").value = item.nombre || "";
+  document.getElementById("editar-stock-colegio").value = item.colegio || "";
+  document.getElementById("editar-stock-codigo").value = item.codigoGonvill || "";
+
+  document.getElementById("editar-stock-stock").value = Number(item.stock) || 0;
+  document.getElementById("editar-stock-max").value = Number(item.max) || 0;
+  document.getElementById("editar-stock-backorder").value = Number(item.backorder) || 0;
+  document.getElementById("editar-stock-surtidos").value = Number(item.surtidos) || 0;
+  document.getElementById("editar-stock-nota").value = "";
+
+  document.getElementById("info-editar-stock").innerHTML = `
+    <p><strong>Producto:</strong><br>${item.nombre || ""}</p>
+    <p><strong>Colegio:</strong><br>${item.colegio || ""}</p>
+    <p><strong>Código Gonvill:</strong><br>${item.codigoGonvill || "Sin código"}</p>
+  `;
+
+  const modal = document.getElementById("modal-editar-stock");
+  modal.style.display = "block";
+  modal.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  document.getElementById("editar-stock-stock").focus();
+}
+
+function cerrarEditarStockInventario() {
+  document.getElementById("modal-editar-stock").style.display = "none";
+  productoEditandoStock = null;
+}
+
+async function guardarAjusteInventarioManual() {
+  if (!productoEditandoStock) {
+    alert("No hay producto seleccionado.");
+    return;
+  }
+
+  const producto = document.getElementById("editar-stock-producto").value.trim();
+  const colegio = document.getElementById("editar-stock-colegio").value.trim();
+  const codigoGonvill = document.getElementById("editar-stock-codigo").value.trim();
+
+  const stock = Number(document.getElementById("editar-stock-stock").value);
+  const max = Number(document.getElementById("editar-stock-max").value);
+  const backorder = Number(document.getElementById("editar-stock-backorder").value);
+  const surtidos = Number(document.getElementById("editar-stock-surtidos").value);
+  const nota = document.getElementById("editar-stock-nota").value.trim();
+
+  if (!producto || !colegio) {
+    alert("Producto o colegio inválido.");
+    return;
+  }
+
+  if ([stock, max, backorder, surtidos].some(valor => isNaN(valor) || valor < 0)) {
+    alert("Stock, máximo, backorder y surtidos deben ser números mayores o iguales a 0.");
+    return;
+  }
+
+  const confirmar = confirm(
+    "¿Guardar ajuste manual de inventario?\n\n" +
+    producto + "\n" +
+    "Stock: " + stock + "\n" +
+    "Máximo: " + max + "\n" +
+    "Backorder: " + backorder + "\n" +
+    "Surtidos: " + surtidos
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const respuesta = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "ajustarInventarioManual",
+        producto,
+        colegio,
+        codigoGonvill,
+        stock,
+        max,
+        backorder,
+        surtidos,
+        nota
+      })
+    });
+
+    const resultado = await respuesta.json();
+
+    if (!resultado.ok) {
+      alert("Error: " + resultado.error);
+      return;
+    }
+
+    alert("Inventario actualizado correctamente.");
+    cerrarEditarStockInventario();
+    cargarInventario();
+    cargarAlertasFaltantes();
+
+  } catch (error) {
+    console.error(error);
+    alert("No se pudo actualizar el inventario.");
+  }
+}
+
   
 async function cargarAlertasFaltantes() {
   const contenedor = document.getElementById("alertas-faltantes");
